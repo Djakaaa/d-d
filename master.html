@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Dashboard Master</h1>
+            <div id="sessionInfo"></div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Giocatori -->
+            <div class="card">
+                <h2>👥 Giocatori</h2>
+                <div id="playersList"></div>
+                <button onclick="addPlayer()" class="btn">➕ Aggiungi NPC</button>
+            </div>
+            
+            <!-- Nemici -->
+            <div class="card">
+                <h2>👹 Nemici</h2>
+                <div id="enemiesList"></div>
+                <input type="text" id="newEnemyName" placeholder="Nome nemico" class="input">
+                <input type="number" id="newEnemyHP" placeholder="HP" class="input">
+                <button onclick="addEnemy()" class="btn btn-secondary">➕ Aggiungi Nemico</button>
+            </div>
+        </div>
+        
+        <!-- Gestione Oggetti -->
+        <div class="card">
+            <h2>🎒 Invia Oggetti</h2>
+            <div class="item-controls">
+                <select id="targetPlayer" class="input">
+                    <option value="all">Tutti i giocatori</option>
+                </select>
+                <input type="text" id="itemName" placeholder="Nome oggetto" class="input">
+                <input type="text" id="itemDesc" placeholder="Descrizione" class="input">
+                <button onclick="sendItem()" class="btn btn-primary">📤 Invia Oggetto</button>
+            </div>
+        </div>
+        
+        <!-- Chat Master -->
+        <div class="card">
+            <h2>💬 Chat Master</h2>
+            <div id="masterChat" class="chat-container"></div>
+            <input type="text" id="masterMessage" placeholder="Messaggio per tutti..." class="input">
+            <button onclick="sendMasterMessage()" class="btn">Invia</button>
+        </div>
+        
+        <!-- Controlli Abilità Livello 3 -->
+        <div class="card">
+            <h2>⚡ Controllo Abilità Speciali</h2>
+            <div id="abilityRequests"></div>
+        </div>
+        
+        <button onclick="saveSession()" class="btn btn-success">💾 Salva Sessione</button>
+    </div>
+    
+    <script src="master.js"></script>
+</body>
+</html>

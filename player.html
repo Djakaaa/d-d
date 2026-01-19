@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player View</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="playerName"></h1>
+            <div id="playerStats"></div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Personaggio -->
+            <div class="card">
+                <h2>🧙‍♂️ Il tuo Personaggio</h2>
+                <div id="characterInfo"></div>
+            </div>
+            
+            <!-- Abilità -->
+            <div class="card">
+                <h2>⚡ Abilità</h2>
+                <div id="abilitiesList"></div>
+            </div>
+            
+            <!-- Inventario -->
+            <div class="card">
+                <h2>🎒 Inventario</h2>
+                <div id="inventoryList"></div>
+            </div>
+        </div>
+        
+        <!-- Chat -->
+        <div class="card">
+            <h2>💬 Chat</h2>
+            <div id="playerChat" class="chat-container"></div>
+            <input type="text" id="playerMessage" placeholder="Scrivi un messaggio..." class="input">
+            <button onclick="sendPlayerMessage()" class="btn">Invia</button>
+        </div>
+        
+        <!-- Richieste Abilità Livello 3 -->
+        <div class="card">
+            <h2>🔓 Richiedi Abilità Speciale</h2>
+            <button onclick="requestAbility(2)" class="btn level-3">Richiedi uso Abilità Livello 3</button>
+            <div id="requestStatus"></div>
+        </div>
+    </div>
+    
+    <script src="player.js"></script>
+</body>
+</html>

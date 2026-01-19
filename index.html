@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D&D Session Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 D&D Session Manager</h1>
+        
+        <div class="card">
+            <h2>🎮 Crea una Nuova Sessione</h2>
+            <input type="text" id="masterName" placeholder="Il tuo nome (Master)" class="input">
+            <input type="text" id="sessionName" placeholder="Nome della sessione" class="input">
+            <button onclick="createSession()" class="btn btn-primary">Crea Sessione</button>
+            
+            <div id="sessionLink" class="hidden">
+                <p>Condividi questo link con i giocatori:</p>
+                <input type="text" id="inviteUrl" readonly class="input">
+                <button onclick="copyLink()" class="btn btn-secondary">Copia Link</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>👤 Entra in una Sessione</h2>
+            <input type="text" id="playerName" placeholder="Il tuo nome" class="input">
+            <input type="text" id="joinCode" placeholder="Codice sessione (dall'URL)" class="input">
+            <button onclick="joinSession()" class="btn btn-success">Unisciti</button>
+        </div>
+    </div>
+    
+    <script src="session.js"></script>
+    <script>
+        function createSession() {
+            const masterName = document.getElementById('masterName').value;
+            const sessionName = document.getElementById('sessionName').value;
+            
+            if(!masterName || !sessionName) {
+                alert('Inserisci nome e sessione!');
+                return;
+            }
+            
+            // Genera codice sessione univoco
+            const sessionCode = Math.random().toString(36).substr(2, 8).toUpperCase();
+            
+            // Salva nel localStorage
+            localStorage.setItem('sessionData', JSON.stringify({
+                code: sessionCode,
+                master: masterName,
+                name: sessionName,
+                players: [],
+                enemies: [],
+                timestamp: Date.now()
+            }));
+            
+            // Mostra link
+            const inviteUrl = window.location.origin + '/player.html?session=' + sessionCode;
+            document.getElementById('inviteUrl').value = inviteUrl;
+            document.getElementById('sessionLink').classList.remove('hidden');
+            
+            // Redirect al dashboard master dopo 3 secondi
+            setTimeout(() => {
+                window.location.href = 'master.html?session=' + sessionCode;
+            }, 3000);
+        }
+        
+        function joinSession() {
+            const playerName = document.getElementById('playerName').value;
+            const sessionCode = document.getElementById('joinCode').value.toUpperCase();
+            
+            if(!playerName || !sessionCode) {
+                alert('Inserisci nome e codice!');
+                return;
+            }
+            
+            // Salva dati giocatore
+            localStorage.setItem('playerData', JSON.stringify({
+                name: playerName,
+                session: sessionCode,
+                joined: Date.now()
+            }));
+            
+            // Redirect alla vista giocatore
+            window.location.href = 'player.html?session=' + sessionCode;
+        }
+        
+        function copyLink() {
+            const copyText = document.getElementById('inviteUrl');
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            alert('Link copiato!');
+        }
+    </script>
+</body>
+</html>
