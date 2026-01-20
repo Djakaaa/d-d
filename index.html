@@ -2,97 +2,4509 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>D&D Session Manager</title>
-    <link rel="stylesheet" href="style.css">
+    
+    <!-- PWA -->
+    <meta name="description" content="Gestione sessioni di gioco di Dungeons & Dragons">
+    <meta name="theme-color" content="#0f4c75">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐉</text></svg>">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --accent: #0f4c75;
+            --accent-light: #3282b8;
+            --highlight: #bbe1fa;
+            --text-light: #f0f0f0;
+            --text-muted: #b0b0b0;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --danger: #f44336;
+            --enemy-color: #e63946;
+            --player-color: #2a9d8f;
+            --victory-color: #FFD700;
+            --potion-color: #9c27b0;
+            --poison-color: #4CAF50;
+            --notes-color: #FF9800;
+            --story-color: #9C27B0;
+            --transition: all 0.3s ease;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --mobile-breakpoint: 768px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ===== LOGIN SCREEN ===== */
+        .login-screen {
+            width: 100%;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 3000;
+            overflow-y: auto;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 500px;
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.95) 0%, rgba(26, 26, 46, 0.95) 100%);
+            border-radius: var(--border-radius);
+            padding: 40px 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            color: var(--highlight);
+            margin-bottom: 15px;
+            font-size: 2.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .login-header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .login-form {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--highlight);
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 16px 20px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            color: var(--text-light);
+            font-size: 1.1rem;
+            transition: var(--transition);
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: var(--accent-light);
+            box-shadow: 0 0 0 3px rgba(50, 130, 184, 0.3);
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .login-form input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .login-form button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .login-form button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .login-form button:active {
+            transform: translateY(-1px);
+        }
+
+        .file-import-export {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .file-import-export h3 {
+            color: var(--highlight);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .file-input-group button {
+            width: 100%;
+            padding: 16px;
+            background-color: rgba(50, 130, 184, 0.2);
+            color: var(--highlight);
+            border: 2px solid var(--accent-light);
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .file-input-group button:hover {
+            background-color: rgba(50, 130, 184, 0.4);
+            transform: translateY(-2px);
+        }
+
+        #loadSessionFile, #importFile {
+            display: none;
+        }
+
+        .recent-sessions {
+            margin-top: 30px;
+        }
+
+        .recent-sessions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .recent-session-btn {
+            width: 100%;
+            padding: 16px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            color: var(--text-light);
+            font-size: 1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .recent-session-btn:hover {
+            background-color: rgba(50, 130, 184, 0.3);
+            border-color: var(--accent-light);
+            transform: translateX(5px);
+        }
+
+        .recent-session-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .recent-session-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 1.1rem;
+        }
+
+        .recent-session-date {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .no-recent-sessions {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px 20px;
+            font-style: italic;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: var(--border-radius);
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .login-tips {
+            margin-top: 40px;
+            padding: 25px;
+            background: linear-gradient(135deg, rgba(15, 76, 117, 0.2) 0%, rgba(50, 130, 184, 0.2) 100%);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--accent-light);
+        }
+
+        .login-tips h4 {
+            color: var(--highlight);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .login-tips ul {
+            list-style: none;
+            padding-left: 5px;
+        }
+
+        .login-tips li {
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .login-tips li i {
+            color: var(--accent-light);
+            margin-top: 2px;
+        }
+
+        /* ===== MAIN APP ===== */
+        .main-app {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+            padding: 0;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 15px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.9) 0%, rgba(26, 26, 46, 0.9) 100%);
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .session-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .session-info {
+                flex-direction: row;
+                align-items: center;
+                margin-bottom: 0;
+            }
+        }
+
+        .session-info h1 {
+            color: var(--highlight);
+            font-size: 1.8rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .session-tag {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            box-shadow: 0 2px 8px rgba(15, 76, 117, 0.3);
+        }
+
+        .combat-status {
+            background: linear-gradient(135deg, var(--success) 0%, #45a049 100%);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .header-controls::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Buttons */
+        button {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            min-height: 48px;
+            touch-action: manipulation;
+            box-shadow: 0 2px 8px rgba(15, 76, 117, 0.3);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(15, 76, 117, 0.4);
+        }
+
+        button.danger { background: linear-gradient(135deg, var(--danger) 0%, #d32f2f 100%); box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3); }
+        button.success { background: linear-gradient(135deg, var(--success) 0%, #45a049 100%); box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
+        button.warning { background: linear-gradient(135deg, var(--warning) 0%, #f57c00 100%); box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3); }
+        button.enemy { background: linear-gradient(135deg, var(--enemy-color) 0%, #c62828 100%); box-shadow: 0 2px 8px rgba(230, 57, 70, 0.3); }
+        button.victory { background: linear-gradient(135deg, var(--victory-color) 0%, #ffb300 100%); color: #333; box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3); }
+        button.potion { background: linear-gradient(135deg, var(--potion-color) 0%, #7b1fa2 100%); box-shadow: 0 2px 8px rgba(156, 39, 176, 0.3); }
+        button.poison { background: linear-gradient(135deg, var(--poison-color) 0%, #388e3c 100%); box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
+        button.notes { background: linear-gradient(135deg, var(--notes-color) 0%, #f57c00 100%); box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3); }
+        button.story { background: linear-gradient(135deg, var(--story-color) 0%, #7b1fa2 100%); box-shadow: 0 2px 8px rgba(156, 39, 176, 0.3); }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto auto auto auto;
+            gap: 20px;
+            padding: 0 20px 100px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (min-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto auto;
+            }
+        }
+
+        /* Sidebars */
+        .mobile-sidebar-toggle {
+            display: none;
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            z-index: 1000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            border: none;
+        }
+
+        @media (max-width: 767px) {
+            .mobile-sidebar-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .sidebar, .right-sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 85%;
+            max-width: 400px;
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.98) 0%, rgba(26, 26, 46, 0.98) 100%);
+            backdrop-filter: blur(30px);
+            padding: 25px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            z-index: 1001;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+
+        .sidebar {
+            left: 0;
+            transform: translateX(-100%);
+        }
+
+        .right-sidebar {
+            right: 0;
+            transform: translateX(100%);
+        }
+
+        .sidebar.active, .right-sidebar.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h2 {
+            color: var(--highlight);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .close-sidebar {
+            background: transparent;
+            font-size: 1.8rem;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            color: var(--text-muted);
+            box-shadow: none;
+        }
+
+        .close-sidebar:hover {
+            color: var(--highlight);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Player Cards */
+        .players-container, .enemies-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 480px) {
+            .players-container, .enemies-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 12px;
+            }
+        }
+
+        .player-card, .enemy-card {
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.9) 0%, rgba(26, 26, 46, 0.9) 100%);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            min-height: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .player-card:hover, .enemy-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .player-card {
+            border-left: 5px solid var(--player-color);
+        }
+
+        .enemy-card {
+            border-left: 5px solid var(--enemy-color);
+        }
+
+        .player-card.active {
+            box-shadow: 0 0 0 3px var(--player-color), 0 8px 25px rgba(42, 157, 143, 0.3);
+            animation: playerPulse 2s infinite;
+        }
+
+        @keyframes playerPulse {
+            0% { box-shadow: 0 0 0 3px var(--player-color), 0 8px 25px rgba(42, 157, 143, 0.3); }
+            50% { box-shadow: 0 0 0 6px rgba(42, 157, 143, 0.3), 0 8px 25px rgba(42, 157, 143, 0.4); }
+            100% { box-shadow: 0 0 0 3px var(--player-color), 0 8px 25px rgba(42, 157, 143, 0.3); }
+        }
+
+        .player-photo-container {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            margin-bottom: 15px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(15, 76, 117, 0.3) 0%, rgba(50, 130, 184, 0.3) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .player-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .player-photo:hover {
+            transform: scale(1.05);
+        }
+
+        .player-photo-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: white;
+            font-size: 2.5rem;
+        }
+
+        .photo-upload-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            z-index: 2;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .photo-upload-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .player-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--highlight);
+        }
+
+        .player-controls {
+            display: flex;
+            gap: 6px;
+        }
+
+        .player-controls .health-btn {
+            padding: 8px 12px;
+            min-height: auto;
+            font-size: 0.9rem;
+        }
+
+        /* Health System */
+        .health-section {
+            margin: 15px 0;
+        }
+
+        .health-input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .health-input-group input {
+            flex: 1;
+            padding: 10px;
+            background-color: rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text-light);
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .health-input-group input:focus {
+            border-color: var(--accent-light);
+            box-shadow: 0 0 0 2px rgba(50, 130, 184, 0.2);
+        }
+
+        .health-bar {
+            width: 100%;
+            height: 26px;
+            background-color: rgba(0,0,0,0.4);
+            border-radius: 13px;
+            overflow: hidden;
+            margin: 8px 0;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success) 0%, #8BC34A 100%);
+            border-radius: 13px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            min-width: 0%;
+        }
+
+        .health-fill.low {
+            background: linear-gradient(90deg, var(--danger) 0%, #ff6b6b 100%);
+        }
+
+        .health-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-weight: 700;
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            font-size: 0.9rem;
+            line-height: 26px;
+            pointer-events: none;
+        }
+
+        /* Combat Section */
+        .combat-section {
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.7) 0%, rgba(26, 26, 46, 0.7) 100%);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (min-width: 1200px) {
+            .combat-section {
+                grid-column: 1 / -1;
+            }
+        }
+
+        .current-actor {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+            display: none;
+            animation: slideIn 0.5s ease;
+            box-shadow: 0 4px 20px rgba(15, 76, 117, 0.4);
+        }
+
+        .current-actor.active {
+            display: block;
+        }
+
+        .current-actor-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        #actorInstructions {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Action Input */
+        .action-input-section {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(22, 33, 62, 0.3) 100%);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            margin-top: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .action-tabs {
+            display: flex;
+            overflow-x: auto;
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            -webkit-overflow-scrolling: touch;
+            gap: 5px;
+        }
+
+        .action-tab {
+            padding: 14px 25px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            border-bottom: 4px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+
+        .action-tab:hover {
+            color: var(--highlight);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .action-tab.active {
+            color: var(--highlight);
+            border-bottom-color: var(--accent-light);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .action-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 480px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: var(--highlight);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input, select, textarea {
+            padding: 14px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-light);
+            box-shadow: 0 0 0 3px rgba(50, 130, 184, 0.3);
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        /* Notes Section */
+        .notes-section {
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.7) 0%, rgba(26, 26, 46, 0.7) 100%);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (min-width: 1200px) {
+            .notes-section {
+                grid-column: 1;
+                grid-row: 2;
+            }
+        }
+
+        .notes-content {
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            line-height: 1.6;
+            padding: 20px;
+            background-color: rgba(0,0,0,0.3);
+            border-radius: var(--border-radius);
+            margin-top: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Story Section */
+        .story-section {
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.7) 0%, rgba(26, 26, 46, 0.7) 100%);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+        }
+
+        @media (min-width: 1200px) {
+            .story-section {
+                grid-column: 2;
+                grid-row: 2;
+            }
+        }
+
+        .story-editor {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .story-editor.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* Action Log */
+        .action-log {
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.7) 0%, rgba(26, 26, 46, 0.7) 100%);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (min-width: 1200px) {
+            .action-log {
+                grid-column: 1 / -1;
+                grid-row: 3;
+            }
+        }
+
+        .log-entries {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-right: 10px;
+        }
+
+        .log-entry {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            border-left: 4px solid var(--accent-light);
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .log-entry:hover {
+            transform: translateX(5px);
+            border-left-width: 8px;
+        }
+
+        .log-entry.damage { border-left-color: var(--danger); }
+        .log-entry.heal { border-left-color: var(--success); }
+        .log-entry.potion { border-left-color: var(--potion-color); }
+        .log-entry.poison { border-left-color: var(--poison-color); }
+        .log-entry.victory { border-left-color: var(--victory-color); }
+        .log-entry.notes { border-left-color: var(--notes-color); }
+        .log-entry.story { border-left-color: var(--story-color); }
+
+        .log-entry .timestamp {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.9) 0%, rgba(26, 26, 46, 0.9) 100%);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(22, 33, 62, 0.3) 100%);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+        }
+
+        .stat-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-light);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--highlight);
+            line-height: 1.2;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            height: 250px;
+            margin-top: 25px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* File Import/Export */
+        .file-management {
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.9) 0%, rgba(26, 26, 46, 0.9) 100%);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .file-input-group-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 480px) {
+            .file-input-group-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Victory Screen */
+        .victory-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(26, 26, 46, 0.98) 100%);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .victory-content {
+            background: linear-gradient(135deg, var(--victory-color) 0%, #FFB347 100%);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            color: #333;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            animation: popIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .victory-content h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .victory-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .victory-stat {
+            background-color: rgba(255, 255, 255, 0.3);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(26, 26, 46, 0.98) 100%);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, var(--secondary-dark) 0%, var(--primary-dark) 100%);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header h2 {
+            color: var(--highlight);
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--highlight);
+            transform: rotate(90deg);
+        }
+
+        /* Save Notification */
+        .save-notification {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--success) 0%, #45a049 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: var(--border-radius);
+            display: none;
+            align-items: center;
+            gap: 15px;
+            z-index: 1000;
+            animation: slideUpNotify 2s ease;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes slideUpNotify {
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        }
+
+        /* Bottom Navigation - Mobile */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.98) 0%, rgba(26, 26, 46, 0.98) 100%);
+            backdrop-filter: blur(30px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0 20px;
+            z-index: 999;
+            -webkit-backdrop-filter: blur(30px);
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.3);
+        }
+
+        @media (min-width: 768px) {
+            .bottom-nav {
+                display: none;
+            }
+        }
+
+        .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            padding: 8px 12px;
+            min-height: auto;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            box-shadow: none;
+        }
+
+        .nav-button:hover, .nav-button.active {
+            color: var(--highlight);
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .nav-button i {
+            font-size: 1.4rem;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            background-color: var(--highlight);
+            top: -20px;
+            z-index: 3000;
+            pointer-events: none;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg) scale(0); opacity: 0; }
+        }
+
+        /* Desktop Styles */
+        @media (min-width: 768px) {
+            .login-screen {
+                padding: 40px 20px;
+            }
+
+            .login-container {
+                padding: 50px 40px;
+            }
+
+            .main-app {
+                grid-template-columns: 300px 1fr 350px;
+                grid-template-rows: auto 1fr;
+                gap: 25px;
+                padding: 25px;
+                height: 100vh;
+            }
+
+            .mobile-sidebar-toggle, .bottom-nav, .sidebar-overlay {
+                display: none !important;
+            }
+
+            .sidebar, .right-sidebar {
+                position: relative;
+                transform: none;
+                width: auto;
+                max-width: none;
+                background: linear-gradient(135deg, rgba(22, 33, 62, 0.7) 0%, rgba(26, 26, 46, 0.7) 100%);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto auto;
+                padding: 0;
+            }
+
+            header {
+                position: static;
+                grid-column: 1 / -1;
+                border-radius: var(--border-radius);
+            }
+
+            .session-info {
+                flex-direction: row;
+                align-items: center;
+                margin-bottom: 0;
+            }
+
+            .header-controls {
+                overflow-x: visible;
+            }
+
+            .players-container, .enemies-container {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+        }
+
+        /* Landscape Mode */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .login-screen {
+                padding: 20px;
+                justify-content: flex-start;
+            }
+
+            .login-container {
+                margin-top: 20px;
+                margin-bottom: 20px;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
+            .main-content {
+                grid-template-rows: auto auto;
+                gap: 15px;
+            }
+
+            .action-log, .notes-section, .story-section {
+                max-height: 200px;
+            }
+        }
+
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            :root {
+                --text-light: #ffffff;
+                --text-muted: #ffffff;
+            }
+
+            button {
+                border: 2px solid currentColor;
+            }
+
+            .player-card, .enemy-card, .stats-section, .combat-section {
+                border: 2px solid var(--text-light);
+            }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-light);
+        }
+
+        /* Selection */
+        ::selection {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        /* Focus Styles */
+        :focus-visible {
+            outline: 3px solid var(--accent-light);
+            outline-offset: 2px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎲 D&D Session Manager</h1>
-        
-        <div class="card">
-            <h2>🎮 Crea una Nuova Sessione</h2>
-            <input type="text" id="masterName" placeholder="Il tuo nome (Master)" class="input">
-            <input type="text" id="sessionName" placeholder="Nome della sessione" class="input">
-            <button onclick="createSession()" class="btn btn-primary">Crea Sessione</button>
-            
-            <div id="sessionLink" class="hidden">
-                <p>Condividi questo link con i giocatori:</p>
-                <input type="text" id="inviteUrl" readonly class="input">
-                <button onclick="copyLink()" class="btn btn-secondary">Copia Link</button>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>
+                    <i class="fas fa-dragon"></i>
+                    D&D Session Manager
+                    <i class="fas fa-dice-d20"></i>
+                </h1>
+                <p>Gestisci le tue sessioni di Dungeons & Dragons in modo semplice e intuitivo</p>
+            </div>
+
+            <!-- Nuova Sessione -->
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="sessionName">
+                        <i class="fas fa-gamepad"></i> Nome della Sessione
+                    </label>
+                    <input type="text" 
+                           id="sessionName" 
+                           placeholder="Es: La Miniera Perduta, La Fortezza Oscura..." 
+                           required
+                           autocomplete="off"
+                           autofocus>
+                </div>
+                <button type="submit" class="success">
+                    <i class="fas fa-play-circle"></i> Inizia Nuova Sessione
+                </button>
+            </form>
+
+            <!-- Carica da File -->
+            <div class="file-import-export">
+                <h3><i class="fas fa-folder-open"></i> Carica Sessione Esistente</h3>
+                <div class="file-input-group">
+                    <input type="file" id="loadSessionFile" accept=".json">
+                    <button type="button" id="selectFileBtn">
+                        <i class="fas fa-file-import"></i> Carica File JSON
+                    </button>
+                    <small style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 8px;">
+                        File salvati precedentemente (.json)
+                    </small>
+                </div>
+            </div>
+
+            <!-- Sessioni Recenti -->
+            <div class="recent-sessions">
+                <h3><i class="fas fa-history"></i> Sessioni Recenti</h3>
+                <div class="recent-sessions-list" id="recentSessions">
+                    <div class="no-recent-sessions">
+                        <i class="fas fa-clock" style="font-size: 2.5rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                        <p style="font-size: 1.1rem; margin-bottom: 5px;">Nessuna sessione recente</p>
+                        <p style="font-size: 0.95rem;">
+                            Inizia una nuova sessione o carica un file esistente
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Istruzioni -->
+            <div class="login-tips">
+                <h4><i class="fas fa-lightbulb"></i> Come Iniziare</h4>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> <strong>Nuova Sessione:</strong> Inserisci un nome e inizia subito</li>
+                    <li><i class="fas fa-file-import"></i> <strong>Carica Sessione:</strong> Importa un file JSON salvato precedentemente</li>
+                    <li><i class="fas fa-history"></i> <strong>Sessioni Recenti:</strong> Riprendi le sessioni salvate di recente</li>
+                    <li><i class="fas fa-save"></i> <strong>Auto-salvataggio:</strong> I dati vengono salvati automaticamente ogni 30 secondi</li>
+                    <li><i class="fas fa-mobile-alt"></i> <strong>Mobile Friendly:</strong> Usa l'app comodamente dal tuo smartphone</li>
+                </ul>
             </div>
         </div>
-        
-        <div class="card">
-            <h2>👤 Entra in una Sessione</h2>
-            <input type="text" id="playerName" placeholder="Il tuo nome" class="input">
-            <input type="text" id="joinCode" placeholder="Codice sessione (dall'URL)" class="input">
-            <button onclick="joinSession()" class="btn btn-success">Unisciti</button>
+    </div>
+
+    <!-- Main App -->
+    <div class="main-app" id="mainApp">
+        <!-- Header -->
+        <header>
+            <div class="session-info">
+                <h1 id="currentSessionName">Sessione di Gioco</h1>
+                <span class="session-tag" id="autoSaveStatus">
+                    <i class="fas fa-sync-alt"></i> Auto-salvataggio attivo
+                </span>
+                <span class="combat-status" id="combatStatus">
+                    <i class="fas fa-peace"></i> In Esplorazione
+                </span>
+            </div>
+            <div class="header-controls">
+                <button id="saveSessionBtn">
+                    <i class="fas fa-save"></i> Salva Ora
+                </button>
+                <button id="exportSessionBtn">
+                    <i class="fas fa-download"></i> Esporta
+                </button>
+                <button id="endSessionBtn" class="warning">
+                    <i class="fas fa-flag-checkered"></i> Termina Sessione
+                </button>
+                <button id="toggleCombatBtn" class="enemy">
+                    <i class="fas fa-fist-raised"></i> Combattimento
+                </button>
+            </div>
+        </header>
+
+        <!-- Left Sidebar (Players) -->
+        <div class="sidebar" id="leftSidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-users"></i> Personaggi</h2>
+                <button class="close-sidebar" id="closeLeftSidebar">&times;</button>
+            </div>
+            <button id="addPlayerBtn" class="success">
+                <i class="fas fa-user-plus"></i> Nuovo Personaggio
+            </button>
+            <div class="players-container" id="playersList">
+                <!-- Giocatori verranno aggiunti qui -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Combat Section -->
+            <div class="combat-section" id="combatSection">
+                <div class="current-actor" id="currentActor">
+                    <div class="current-actor-name" id="currentActorName"></div>
+                    <div id="actorInstructions">Seleziona un personaggio per farlo agire</div>
+                </div>
+
+                <div class="action-input-section" id="actionInputSection">
+                    <div class="action-tabs">
+                        <button class="action-tab active" data-tab="attack">⚔️ Attacco</button>
+                        <button class="action-tab" data-tab="potion">🧪 Pozione</button>
+                        <button class="action-tab" data-tab="notes">📝 Appunti</button>
+                        <button class="action-tab" data-tab="story">📖 Storia</button>
+                        <button class="action-tab" data-tab="other">🎭 Altro</button>
+                    </div>
+                    
+                    <!-- Attack Form -->
+                    <div class="action-form active" id="attackForm">
+                        <div class="form-group">
+                            <label for="damageAmount"><i class="fas fa-bomb"></i> Danno</label>
+                            <input type="number" id="damageAmount" placeholder="Inserisci il danno" min="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="targetSelect"><i class="fas fa-crosshairs"></i> Bersaglio</label>
+                            <select id="targetSelect">
+                                <option value="">Seleziona un bersaglio...</option>
+                            </select>
+                        </div>
+                        <button id="applyDamageBtn" class="success">
+                            <i class="fas fa-bolt"></i> Applica Danno
+                        </button>
+                    </div>
+                    
+                    <!-- Potion Form -->
+                    <div class="action-form" id="potionForm" style="display: none;">
+                        <div class="form-group">
+                            <label for="potionType"><i class="fas fa-flask"></i> Tipo Pozione</label>
+                            <select id="potionType">
+                                <option value="heal">🧪 Pozione di Guarigione</option>
+                                <option value="poison">☠️ Veleno</option>
+                                <option value="strength">💪 Pozione di Forza</option>
+                                <option value="speed">⚡ Pozione di Velocità</option>
+                                <option value="invisibility">👻 Pozione di Invisibilità</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="potionTarget"><i class="fas fa-crosshairs"></i> Bersaglio</label>
+                            <select id="potionTarget">
+                                <option value="">Seleziona un bersaglio...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="potionEffect"><i class="fas fa-chart-line"></i> Effetto/Quantità</label>
+                            <input type="number" id="potionEffect" placeholder="Inserisci il valore" min="1" step="1">
+                        </div>
+                        <button id="applyPotionBtn" class="potion">
+                            <i class="fas fa-magic"></i> Usa Pozione
+                        </button>
+                    </div>
+                    
+                    <!-- Notes Form -->
+                    <div class="action-form" id="notesForm" style="display: none;">
+                        <div class="form-group full-width">
+                            <label for="notesTarget"><i class="fas fa-user"></i> Personaggio</label>
+                            <select id="notesTarget">
+                                <option value="">Seleziona un personaggio...</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="notesText"><i class="fas fa-edit"></i> Appunti</label>
+                            <textarea id="notesText" placeholder="Inserisci appunti su questo personaggio..."></textarea>
+                        </div>
+                        <button id="saveNotesBtn" class="notes">
+                            <i class="fas fa-save"></i> Salva Appunti
+                        </button>
+                    </div>
+                    
+                    <!-- Story Form -->
+                    <div class="action-form" id="storyForm" style="display: none;">
+                        <div class="form-group full-width">
+                            <label for="storyEntry"><i class="fas fa-book"></i> Voce di Storia</label>
+                            <textarea id="storyEntry" placeholder="Descrivi quello che succede nella storia..."></textarea>
+                        </div>
+                        <button id="saveStoryBtn" class="story">
+                            <i class="fas fa-feather-alt"></i> Aggiungi alla Storia
+                        </button>
+                    </div>
+                    
+                    <!-- Other Form -->
+                    <div class="action-form" id="otherForm" style="display: none;">
+                        <div class="form-group full-width">
+                            <label for="otherAction"><i class="fas fa-star"></i> Azione/Descrizione</label>
+                            <textarea id="otherAction" placeholder="Descrivi l'azione, l'abilità o l'evento..."></textarea>
+                        </div>
+                        <button id="applyOtherBtn" class="warning">
+                            <i class="fas fa-check-circle"></i> Registra Azione
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Enemies Section -->
+                <div style="margin-top: 30px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2><i class="fas fa-skull-crossbones"></i> Nemici</h2>
+                        <div id="enemyCount" style="font-weight: 600; color: var(--enemy-color);">
+                            <i class="fas fa-skull"></i> Nemici: 0
+                        </div>
+                    </div>
+                    <div class="enemies-container" id="enemiesList">
+                        <!-- Nemici verranno aggiunti qui -->
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button id="addEnemyBtn" class="enemy">
+                            <i class="fas fa-plus"></i> Aggiungi Nemico
+                        </button>
+                        <button id="enemyAttackAllBtn" class="danger" style="margin-left: 10px;">
+                            <i class="fas fa-fire"></i> Attacco di Gruppo
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="notes-section" id="notesSection">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><i class="fas fa-sticky-note"></i> Appunti Personaggi</h2>
+                    <button id="clearNotesBtn" class="warning" style="padding: 10px 15px;">
+                        <i class="fas fa-trash-alt"></i> Pulisci Tutto
+                    </button>
+                </div>
+                <div class="notes-content" id="notesContent">
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                        <i class="fas fa-sticky-note" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                        <h3 style="margin-bottom: 10px; font-size: 1.3rem;">Nessun appunto salvato</h3>
+                        <p>Usa la tab "Appunti" per aggiungere note sui personaggi</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Story Section -->
+            <div class="story-section" id="storySection">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><i class="fas fa-book-open"></i> Storia della Sessione</h2>
+                    <div>
+                        <button id="toggleStoryEdit" class="story" style="padding: 10px 15px;">
+                            <i class="fas fa-edit"></i> Modifica
+                        </button>
+                        <button id="clearStoryBtn" class="danger" style="padding: 10px 15px; margin-left: 10px;">
+                            <i class="fas fa-trash-alt"></i> Cancella
+                        </button>
+                    </div>
+                </div>
+                <div class="story-content" id="storyContent">
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                        <i class="fas fa-book" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                        <h3 style="margin-bottom: 10px; font-size: 1.3rem;">La storia attende di essere scritta...</h3>
+                        <p>Usa la tab "Storia" per aggiungere voci alla cronaca della sessione</p>
+                    </div>
+                </div>
+                <div class="story-editor" id="storyEditor">
+                    <textarea id="storyTextarea" placeholder="Scrivi qui la storia della sessione..."></textarea>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button id="saveFullStoryBtn" class="success">
+                            <i class="fas fa-save"></i> Salva Storia
+                        </button>
+                        <button id="cancelStoryEditBtn" class="warning">
+                            <i class="fas fa-times"></i> Annulla
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Log -->
+            <div class="action-log" id="actionLog">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><i class="fas fa-scroll"></i> Cronaca degli Eventi</h2>
+                    <button id="clearLogBtn" class="warning" style="padding: 10px 15px;">
+                        <i class="fas fa-broom"></i> Pulisci Log
+                    </button>
+                </div>
+                <div class="log-entries" id="logEntries">
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                        <i class="fas fa-scroll" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                        <h3 style="margin-bottom: 10px; font-size: 1.3rem;">Il log degli eventi è vuoto</h3>
+                        <p>Le azioni appariranno qui mentre giochi</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar (Stats & Controls) -->
+        <div class="right-sidebar" id="rightSidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-chart-bar"></i> Statistiche & Controlli</h2>
+                <button class="close-sidebar" id="closeRightSidebar">&times;</button>
+            </div>
+            
+            <!-- Statistics -->
+            <div class="stats-section">
+                <h3><i class="fas fa-trophy"></i> Statistiche di Gioco</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalDamage">0</div>
+                        <div class="stat-label">Danno Totale</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalActions">0</div>
+                        <div class="stat-label">Azioni Registrate</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="enemiesDefeated">0</div>
+                        <div class="stat-label">Nemici Sconfitti</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="potionsUsed">0</div>
+                        <div class="stat-label">Pozioni Usate</div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="damageChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Quick Controls -->
+            <div class="stats-section">
+                <h3><i class="fas fa-bolt"></i> Controlli Rapidi</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                    <button id="quickHealAllBtn" class="success">
+                        <i class="fas fa-heartbeat"></i> Cura Tutti i PG
+                    </button>
+                    <button id="quickResetCombatBtn" class="warning">
+                        <i class="fas fa-redo"></i> Reset Combattimento
+                    </button>
+                    <button id="quickNotesBtn" class="notes">
+                        <i class="fas fa-pen-fancy"></i> Appunti Veloci
+                    </button>
+                    <button id="quickVictoryBtn" class="victory">
+                        <i class="fas fa-trophy"></i> Vittoria Rapida
+                    </button>
+                </div>
+            </div>
+
+            <!-- File Management -->
+            <div class="file-management">
+                <h3><i class="fas fa-file-export"></i> Gestione File</h3>
+                <div class="file-input-group-grid">
+                    <div>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                        <button type="button" id="importFileBtn">
+                            <i class="fas fa-file-import"></i> Importa
+                        </button>
+                    </div>
+                    <div>
+                        <button id="backupSessionBtn">
+                            <i class="fas fa-copy"></i> Backup
+                        </button>
+                    </div>
+                    <div>
+                        <button id="restoreSessionBtn" class="warning">
+                            <i class="fas fa-undo"></i> Ripristina
+                        </button>
+                    </div>
+                    <div>
+                        <button id="printSessionBtn" class="success">
+                            <i class="fas fa-print"></i> Stampa
+                        </button>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+                    <i class="fas fa-info-circle"></i> I dati vengono salvati automaticamente ogni 30 secondi
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Mobile Bottom Navigation -->
+        <div class="bottom-nav">
+            <button class="nav-button" id="navPlayers" data-sidebar="left">
+                <i class="fas fa-users"></i>
+                <span>Personaggi</span>
+            </button>
+            <button class="nav-button" id="navStats" data-sidebar="right">
+                <i class="fas fa-chart-bar"></i>
+                <span>Statistiche</span>
+            </button>
+            <button class="nav-button active" id="navCombat">
+                <i class="fas fa-fist-raised"></i>
+                <span>Combattimento</span>
+            </button>
+            <button class="nav-button" id="navNotes">
+                <i class="fas fa-sticky-note"></i>
+                <span>Appunti</span>
+            </button>
+            <button class="nav-button" id="navLog">
+                <i class="fas fa-scroll"></i>
+                <span>Cronaca</span>
+            </button>
+        </div>
+
+        <!-- Mobile Sidebar Toggle -->
+        <button class="mobile-sidebar-toggle" id="mobileMenuToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- Victory Screen -->
+    <div class="victory-screen" id="victoryScreen">
+        <div class="victory-content">
+            <h1><i class="fas fa-trophy"></i> VITTORIA!</h1>
+            <p style="font-size: 1.2rem; margin-bottom: 30px;">Hai sconfitto tutti i nemici! Il gruppo è vincente!</p>
+            
+            <div class="victory-stats">
+                <div class="victory-stat">
+                    <div class="stat-value" id="victoryDamage">0</div>
+                    <div class="stat-label">Danno Totale</div>
+                </div>
+                <div class="victory-stat">
+                    <div class="stat-value" id="victoryActions">0</div>
+                    <div class="stat-label">Azioni Totali</div>
+                </div>
+                <div class="victory-stat">
+                    <div class="stat-value" id="victoryEnemies">0</div>
+                    <div class="stat-label">Nemici Sconfitti</div>
+                </div>
+                <div class="victory-stat">
+                    <div class="stat-value" id="victoryPotions">0</div>
+                    <div class="stat-label">Pozioni Usate</div>
+                </div>
+            </div>
+            
+            <div style="margin: 30px 0;">
+                <h3 style="margin-bottom: 15px;"><i class="fas fa-crown"></i> Eroe della Sessione</h3>
+                <div id="victoryHero" style="font-size: 1.3rem; font-weight: bold; color: var(--victory-color);">
+                    Nessun dato disponibile
+                </div>
+            </div>
+            
+            <button id="closeVictoryBtn" class="success" style="width: 100%; padding: 20px; font-size: 1.2rem;">
+                <i class="fas fa-check"></i> Continua l'Avventura
+            </button>
         </div>
     </div>
-    
-    <script src="session.js"></script>
+
+    <!-- Save Notification -->
+    <div class="save-notification" id="saveNotification">
+        <i class="fas fa-check-circle"></i>
+        <span>Sessione salvata automaticamente</span>
+    </div>
+
+    <!-- Add Player Modal -->
+    <div class="modal" id="addPlayerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-plus"></i> Nuovo Personaggio</h2>
+                <button class="close-btn" id="closePlayerModal">&times;</button>
+            </div>
+            <form id="playerForm">
+                <div class="form-group">
+                    <label for="newPlayerName"><i class="fas fa-user"></i> Nome Personaggio</label>
+                    <input type="text" id="newPlayerName" placeholder="Es: Aragorn, Legolas..." required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newPlayerPhoto"><i class="fas fa-camera"></i> Foto del Personaggio</label>
+                    <input type="file" id="newPlayerPhoto" accept="image/*" class="photo-upload">
+                    <small style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px; display: block;">
+                        <i class="fas fa-info-circle"></i> Carica un'immagine dal tuo dispositivo
+                    </small>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newPlayerHealth"><i class="fas fa-heart"></i> Punti Vita Attuali</label>
+                        <input type="number" id="newPlayerHealth" min="1" value="30" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPlayerMaxHealth"><i class="fas fa-heartbeat"></i> Punti Vita Massimi</label>
+                        <input type="number" id="newPlayerMaxHealth" min="1" value="30" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newPlayerClass"><i class="fas fa-hat-wizard"></i> Classe (opzionale)</label>
+                    <input type="text" id="newPlayerClass" placeholder="Es: Guerriero, Mago, Ladro...">
+                </div>
+                
+                <div class="form-group">
+                    <label for="newPlayerAbility1"><i class="fas fa-star"></i> Abilità 1</label>
+                    <input type="text" id="newPlayerAbility1" placeholder="Es: Attacco Potente" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPlayerAbility2"><i class="fas fa-star"></i> Abilità 2</label>
+                    <input type="text" id="newPlayerAbility2" placeholder="Es: Schivata">
+                </div>
+                <div class="form-group">
+                    <label for="newPlayerAbility3"><i class="fas fa-star"></i> Abilità 3</label>
+                    <input type="text" id="newPlayerAbility3" placeholder="Es: Incantesimo">
+                </div>
+                
+                <div class="form-group">
+                    <label for="newPlayerNotes"><i class="fas fa-sticky-note"></i> Note Iniziali</label>
+                    <textarea id="newPlayerNotes" placeholder="Note sul personaggio, background, oggetti speciali..." rows="3"></textarea>
+                </div>
+                
+                <button type="submit" class="success" style="width: 100%; padding: 18px; font-size: 1.1rem;">
+                    <i class="fas fa-check-double"></i> Crea Personaggio
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Enemy Modal -->
+    <div class="modal" id="addEnemyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-skull-crossbones"></i> Nuovo Nemico</h2>
+                <button class="close-btn" id="closeEnemyModal">&times;</button>
+            </div>
+            <form id="enemyForm">
+                <div class="form-group">
+                    <label for="newEnemyName"><i class="fas fa-ghost"></i> Nome Nemico</label>
+                    <input type="text" id="newEnemyName" placeholder="Es: Orco, Goblin, Drago..." required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newEnemyHealth"><i class="fas fa-heart"></i> Punti Vita Attuali</label>
+                        <input type="number" id="newEnemyHealth" min="1" value="20" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newEnemyMaxHealth"><i class="fas fa-heartbeat"></i> Punti Vita Massimi</label>
+                        <input type="number" id="newEnemyMaxHealth" min="1" value="20" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newEnemyDamage"><i class="fas fa-bomb"></i> Danno per Attacco</label>
+                    <input type="number" id="newEnemyDamage" min="0" value="5" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newEnemyArmor"><i class="fas fa-shield-alt"></i> Armatura (opzionale)</label>
+                    <input type="number" id="newEnemyArmor" min="0" value="0" placeholder="Classe Armatura">
+                </div>
+                
+                <div class="form-group">
+                    <label for="newEnemyNotes"><i class="fas fa-sticky-note"></i> Note Speciali</label>
+                    <textarea id="newEnemyNotes" placeholder="Resistenze, abilità speciali, tesori..." rows="3"></textarea>
+                </div>
+                
+                <button type="submit" class="enemy" style="width: 100%; padding: 18px; font-size: 1.1rem;">
+                    <i class="fas fa-skull"></i> Aggiungi Nemico
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Photo Preview Modal -->
+    <div class="modal" id="photoPreviewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-image"></i> Anteprima Immagine</h2>
+                <button class="close-btn" id="closePhotoModal">&times;</button>
+            </div>
+            <div style="text-align: center; margin: 25px 0;">
+                <img id="photoPreview" src="" alt="Anteprima immagine" style="max-width: 100%; max-height: 300px; border-radius: var(--border-radius); border: 2px solid rgba(255, 255, 255, 0.1);">
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <button id="confirmPhotoBtn" class="success" style="flex: 1;">
+                    <i class="fas fa-check"></i> Usa questa Immagine
+                </button>
+                <button id="cancelPhotoBtn" class="warning" style="flex: 1;">
+                    <i class="fas fa-times"></i> Annulla
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Health Modal -->
+    <div class="modal" id="quickHealthModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-heart"></i> Gestione Vita</h2>
+                <button class="close-btn" id="closeHealthModal">&times;</button>
+            </div>
+            <div style="margin: 20px 0;">
+                <div class="form-group">
+                    <label for="quickHealthTarget"><i class="fas fa-crosshairs"></i> Bersaglio</label>
+                    <select id="quickHealthTarget">
+                        <option value="">Seleziona un bersaglio...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="quickHealthAmount"><i class="fas fa-plus-minus"></i> Quantità</label>
+                    <input type="number" id="quickHealthAmount" placeholder="Inserisci la quantità" value="10">
+                </div>
+                <div class="form-group">
+                    <label for="quickHealthType"><i class="fas fa-vial"></i> Tipo</label>
+                    <select id="quickHealthType">
+                        <option value="damage">💀 Danno</option>
+                        <option value="heal">💚 Guarigione</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <button id="applyQuickHealthBtn" class="success" style="flex: 1;">
+                    <i class="fas fa-bolt"></i> Applica
+                </button>
+                <button id="cancelQuickHealthBtn" class="warning" style="flex: 1;">
+                    <i class="fas fa-times"></i> Annulla
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function createSession() {
-            const masterName = document.getElementById('masterName').value;
-            const sessionName = document.getElementById('sessionName').value;
+        // ===== STATO DELL'APPLICAZIONE =====
+        let currentSession = {
+            name: '',
+            players: [],
+            enemies: [],
+            log: [],
+            notes: {},
+            story: 'La storia della sessione...',
+            stats: {
+                totalDamage: 0,
+                totalActions: 0,
+                enemiesDefeated: 0,
+                potionsUsed: 0
+            },
+            selectedPlayer: null,
+            settings: {
+                autoSave: true,
+                combatMode: false
+            },
+            lastSave: null
+        };
+
+        let damageChart = null;
+        let autoSaveInterval = null;
+        let lastBackup = null;
+        let currentPhotoData = null;
+        let currentPhotoTarget = null;
+        let isCombatMode = false;
+
+        // ===== ELEMENTI DOM =====
+        // Login
+        const loginScreen = document.getElementById('loginScreen');
+        const mainApp = document.getElementById('mainApp');
+        const loginForm = document.getElementById('loginForm');
+        const sessionNameInput = document.getElementById('sessionName');
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const loadSessionFile = document.getElementById('loadSessionFile');
+        const recentSessions = document.getElementById('recentSessions');
+
+        // Header
+        const currentSessionName = document.getElementById('currentSessionName');
+        const autoSaveStatus = document.getElementById('autoSaveStatus');
+        const combatStatus = document.getElementById('combatStatus');
+        const saveSessionBtn = document.getElementById('saveSessionBtn');
+        const exportSessionBtn = document.getElementById('exportSessionBtn');
+        const endSessionBtn = document.getElementById('endSessionBtn');
+        const toggleCombatBtn = document.getElementById('toggleCombatBtn');
+
+        // Sidebars
+        const leftSidebar = document.getElementById('leftSidebar');
+        const rightSidebar = document.getElementById('rightSidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const closeLeftSidebar = document.getElementById('closeLeftSidebar');
+        const closeRightSidebar = document.getElementById('closeRightSidebar');
+
+        // Mobile Navigation
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const navPlayers = document.getElementById('navPlayers');
+        const navStats = document.getElementById('navStats');
+        const navCombat = document.getElementById('navCombat');
+        const navNotes = document.getElementById('navNotes');
+        const navLog = document.getElementById('navLog');
+
+        // Players
+        const playersList = document.getElementById('playersList');
+        const addPlayerBtn = document.getElementById('addPlayerBtn');
+
+        // Enemies
+        const enemiesList = document.getElementById('enemiesList');
+        const addEnemyBtn = document.getElementById('addEnemyBtn');
+        const enemyCount = document.getElementById('enemyCount');
+        const enemyAttackAllBtn = document.getElementById('enemyAttackAllBtn');
+
+        // Combat
+        const currentActor = document.getElementById('currentActor');
+        const currentActorName = document.getElementById('currentActorName');
+        const actorInstructions = document.getElementById('actorInstructions');
+        const combatSection = document.getElementById('combatSection');
+
+        // Tabs & Forms
+        const actionTabs = document.querySelectorAll('.action-tab');
+        const actionForms = document.querySelectorAll('.action-form');
+        
+        // Attack Form
+        const damageAmount = document.getElementById('damageAmount');
+        const targetSelect = document.getElementById('targetSelect');
+        const applyDamageBtn = document.getElementById('applyDamageBtn');
+        
+        // Potion Form
+        const potionType = document.getElementById('potionType');
+        const potionTarget = document.getElementById('potionTarget');
+        const potionEffect = document.getElementById('potionEffect');
+        const applyPotionBtn = document.getElementById('applyPotionBtn');
+        
+        // Notes Form
+        const notesTarget = document.getElementById('notesTarget');
+        const notesText = document.getElementById('notesText');
+        const saveNotesBtn = document.getElementById('saveNotesBtn');
+        
+        // Story Form
+        const storyEntry = document.getElementById('storyEntry');
+        const saveStoryBtn = document.getElementById('saveStoryBtn');
+        
+        // Other Form
+        const otherAction = document.getElementById('otherAction');
+        const applyOtherBtn = document.getElementById('applyOtherBtn');
+
+        // Notes Section
+        const notesContent = document.getElementById('notesContent');
+        const clearNotesBtn = document.getElementById('clearNotesBtn');
+        const quickNotesBtn = document.getElementById('quickNotesBtn');
+
+        // Story Section
+        const storyContent = document.getElementById('storyContent');
+        const storyTextarea = document.getElementById('storyTextarea');
+        const storyEditor = document.getElementById('storyEditor');
+        const toggleStoryEdit = document.getElementById('toggleStoryEdit');
+        const saveFullStoryBtn = document.getElementById('saveFullStoryBtn');
+        const cancelStoryEditBtn = document.getElementById('cancelStoryEditBtn');
+        const clearStoryBtn = document.getElementById('clearStoryBtn');
+
+        // Action Log
+        const logEntries = document.getElementById('logEntries');
+        const clearLogBtn = document.getElementById('clearLogBtn');
+
+        // Statistics
+        const totalDamageElement = document.getElementById('totalDamage');
+        const totalActionsElement = document.getElementById('totalActions');
+        const enemiesDefeatedElement = document.getElementById('enemiesDefeated');
+        const potionsUsedElement = document.getElementById('potionsUsed');
+
+        // Quick Controls
+        const quickHealAllBtn = document.getElementById('quickHealAllBtn');
+        const quickResetCombatBtn = document.getElementById('quickResetCombatBtn');
+        const quickVictoryBtn = document.getElementById('quickVictoryBtn');
+
+        // File Management
+        const importFileBtn = document.getElementById('importFileBtn');
+        const importFile = document.getElementById('importFile');
+        const backupSessionBtn = document.getElementById('backupSessionBtn');
+        const restoreSessionBtn = document.getElementById('restoreSessionBtn');
+        const printSessionBtn = document.getElementById('printSessionBtn');
+
+        // Modals
+        const addPlayerModal = document.getElementById('addPlayerModal');
+        const closePlayerModal = document.getElementById('closePlayerModal');
+        const playerForm = document.getElementById('playerForm');
+        const addEnemyModal = document.getElementById('addEnemyModal');
+        const closeEnemyModal = document.getElementById('closeEnemyModal');
+        const enemyForm = document.getElementById('enemyForm');
+        const photoPreviewModal = document.getElementById('photoPreviewModal');
+        const closePhotoModal = document.getElementById('closePhotoModal');
+        const confirmPhotoBtn = document.getElementById('confirmPhotoBtn');
+        const cancelPhotoBtn = document.getElementById('cancelPhotoBtn');
+        const photoPreview = document.getElementById('photoPreview');
+        const newPlayerPhotoInput = document.getElementById('newPlayerPhoto');
+        const quickHealthModal = document.getElementById('quickHealthModal');
+        const closeHealthModal = document.getElementById('closeHealthModal');
+
+        // Victory Screen
+        const victoryScreen = document.getElementById('victoryScreen');
+        const victoryDamage = document.getElementById('victoryDamage');
+        const victoryActions = document.getElementById('victoryActions');
+        const victoryEnemies = document.getElementById('victoryEnemies');
+        const victoryPotions = document.getElementById('victoryPotions');
+        const victoryHero = document.getElementById('victoryHero');
+        const closeVictoryBtn = document.getElementById('closeVictoryBtn');
+
+        // Notification
+        const saveNotification = document.getElementById('saveNotification');
+
+        // ===== INIZIALIZZAZIONE =====
+        function init() {
+            console.log('🚀 Inizializzazione D&D Session Manager...');
             
-            if(!masterName || !sessionName) {
-                alert('Inserisci nome e sessione!');
+            // Focus sull'input del nome sessione
+            sessionNameInput.focus();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Load recent sessions
+            loadRecentSessions();
+            
+            // Check for auto-load session
+            checkAutoLoadSession();
+            
+            // Initialize chart
+            initChart();
+            
+            console.log('✅ Applicazione inizializzata con successo');
+        }
+
+        // ===== SETUP EVENT LISTENERS =====
+        function setupEventListeners() {
+            // Login
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                startNewSession();
+            });
+
+            selectFileBtn.addEventListener('click', () => loadSessionFile.click());
+            loadSessionFile.addEventListener('change', handleLoadSessionFile);
+
+            // Keyboard shortcuts per login
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && document.activeElement === sessionNameInput) {
+                    e.preventDefault();
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+                
+                if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+                    e.preventDefault();
+                    loadSessionFile.click();
+                }
+            });
+
+            // Header buttons
+            saveSessionBtn.addEventListener('click', manualSave);
+            exportSessionBtn.addEventListener('click', exportSession);
+            endSessionBtn.addEventListener('click', endSession);
+            toggleCombatBtn.addEventListener('click', toggleCombatMode);
+
+            // Sidebar controls
+            closeLeftSidebar.addEventListener('click', () => toggleSidebar('left', false));
+            closeRightSidebar.addEventListener('click', () => toggleSidebar('right', false));
+            sidebarOverlay.addEventListener('click', closeAllSidebars);
+
+            // Mobile navigation
+            setupMobileNavigation();
+
+            // Modals
+            addPlayerBtn.addEventListener('click', () => showModal(addPlayerModal));
+            addEnemyBtn.addEventListener('click', () => showModal(addEnemyModal));
+            closePlayerModal.addEventListener('click', () => hideModal(addPlayerModal));
+            closeEnemyModal.addEventListener('click', () => hideModal(addEnemyModal));
+            closePhotoModal.addEventListener('click', () => hideModal(photoPreviewModal));
+            cancelPhotoBtn.addEventListener('click', () => hideModal(photoPreviewModal));
+            closeHealthModal.addEventListener('click', () => hideModal(quickHealthModal));
+            
+            playerForm.addEventListener('submit', addNewPlayer);
+            enemyForm.addEventListener('submit', addNewEnemy);
+            confirmPhotoBtn.addEventListener('click', confirmPhotoSelection);
+
+            // Photo upload
+            newPlayerPhotoInput.addEventListener('change', handlePhotoUpload);
+
+            // Tabs switching
+            actionTabs.forEach(tab => {
+                tab.addEventListener('click', () => switchActionTab(tab.dataset.tab));
+            });
+
+            // Action buttons
+            applyDamageBtn.addEventListener('click', applyDamage);
+            applyPotionBtn.addEventListener('click', applyPotion);
+            saveNotesBtn.addEventListener('click', savePlayerNotes);
+            saveStoryBtn.addEventListener('click', addStoryEntry);
+            applyOtherBtn.addEventListener('click', applyOtherAction);
+
+            // Notes section
+            clearNotesBtn.addEventListener('click', clearAllNotes);
+            quickNotesBtn.addEventListener('click', () => switchActionTab('notes'));
+
+            // Story section
+            toggleStoryEdit.addEventListener('click', toggleStoryEditor);
+            saveFullStoryBtn.addEventListener('click', saveStory);
+            cancelStoryEditBtn.addEventListener('click', cancelStoryEdit);
+            clearStoryBtn.addEventListener('click', clearStory);
+
+            // Action log
+            clearLogBtn.addEventListener('click', clearLog);
+
+            // Enemy controls
+            enemyAttackAllBtn.addEventListener('click', enemyAttackAll);
+
+            // Quick controls
+            quickHealAllBtn.addEventListener('click', healAllPlayers);
+            quickResetCombatBtn.addEventListener('click', resetCombat);
+            quickVictoryBtn.addEventListener('click', triggerVictory);
+
+            // File management
+            importFileBtn.addEventListener('click', () => importFile.click());
+            importFile.addEventListener('change', handleImportSessionFile);
+            backupSessionBtn.addEventListener('click', createBackup);
+            restoreSessionBtn.addEventListener('click', restoreFromBackup);
+            printSessionBtn.addEventListener('click', printSession);
+
+            // Victory screen
+            closeVictoryBtn.addEventListener('click', closeVictoryScreen);
+
+            // Page events
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            window.addEventListener('beforeunload', handleBeforeUnload);
+            window.addEventListener('resize', handleResize);
+        }
+
+        function setupMobileNavigation() {
+            if (!mobileMenuToggle || !navPlayers) return;
+
+            mobileMenuToggle.addEventListener('click', () => {
+                toggleSidebar('left', true);
+            });
+
+            navPlayers.addEventListener('click', () => {
+                toggleSidebar('left', true);
+                setActiveNav('navPlayers');
+            });
+
+            navStats.addEventListener('click', () => {
+                toggleSidebar('right', true);
+                setActiveNav('navStats');
+            });
+
+            navCombat.addEventListener('click', () => {
+                scrollToSection('combat-section');
+                setActiveNav('navCombat');
+                closeAllSidebars();
+            });
+
+            navNotes.addEventListener('click', () => {
+                scrollToSection('notesSection');
+                setActiveNav('navNotes');
+                closeAllSidebars();
+            });
+
+            navLog.addEventListener('click', () => {
+                scrollToSection('actionLog');
+                setActiveNav('navLog');
+                closeAllSidebars();
+            });
+
+            // Close sidebar when clicking outside
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth < 768) {
+                    if (!e.target.closest('.sidebar') && !e.target.closest('.mobile-sidebar-toggle') && 
+                        !e.target.closest('.nav-button')) {
+                        closeAllSidebars();
+                    }
+                }
+            });
+        }
+
+        // ===== FUNZIONI DI NAVIGAZIONE =====
+        function setActiveNav(navId) {
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const navBtn = document.getElementById(navId);
+            if (navBtn) navBtn.classList.add('active');
+        }
+
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function toggleSidebar(side, show) {
+            const sidebar = side === 'left' ? leftSidebar : rightSidebar;
+            if (!sidebar || !sidebarOverlay) return;
+            
+            if (show) {
+                sidebar.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function closeAllSidebars() {
+            toggleSidebar('left', false);
+            toggleSidebar('right', false);
+        }
+
+        // ===== FUNZIONI LOGIN E SESSIONE =====
+        function startNewSession() {
+            const sessionName = sessionNameInput.value.trim();
+            
+            if (!sessionName) {
+                alert('⚠️ Inserisci un nome per la sessione');
+                sessionNameInput.focus();
                 return;
             }
-            
-            // Genera codice sessione univoco
-            const sessionCode = Math.random().toString(36).substr(2, 8).toUpperCase();
-            
-            // Salva nel localStorage
-            localStorage.setItem('sessionData', JSON.stringify({
-                code: sessionCode,
-                master: masterName,
+
+            if (sessionName.length < 3) {
+                alert('⚠️ Il nome della sessione deve essere di almeno 3 caratteri');
+                sessionNameInput.focus();
+                return;
+            }
+
+            // Check for existing session
+            const existingSession = localStorage.getItem(`dnd_session_${sessionName}`);
+            if (existingSession) {
+                if (!confirm(`📁 Esiste già una sessione chiamata "${sessionName}". Vuoi sovrascriverla?`)) {
+                    return;
+                }
+            }
+
+            currentSession = {
                 name: sessionName,
                 players: [],
                 enemies: [],
-                timestamp: Date.now()
-            }));
+                log: [],
+                notes: {},
+                story: '# La storia della sessione\n\nInizia qui la tua avventura...',
+                stats: {
+                    totalDamage: 0,
+                    totalActions: 0,
+                    enemiesDefeated: 0,
+                    potionsUsed: 0
+                },
+                selectedPlayer: null,
+                settings: { 
+                    autoSave: true,
+                    combatMode: false 
+                },
+                lastSave: new Date().toISOString()
+            };
+
+            // Update UI
+            currentSessionName.textContent = sessionName;
+            loginScreen.style.display = 'none';
+            mainApp.style.display = 'grid';
+
+            // Setup mobile UI
+            if (window.innerWidth < 768) {
+                mobileMenuToggle.style.display = 'flex';
+            }
+
+            // Start auto-save
+            startAutoSave();
+
+            // Add to recent sessions
+            addToRecentSessions(sessionName);
+
+            // Initial log entry
+            addLogEntry(`🎮 Sessione "${sessionName}" iniziata!`);
             
-            // Mostra link
-            const inviteUrl = window.location.origin + '/player.html?session=' + sessionCode;
-            document.getElementById('inviteUrl').value = inviteUrl;
-            document.getElementById('sessionLink').classList.remove('hidden');
+            // Initialize chart
+            initChart();
             
-            // Redirect al dashboard master dopo 3 secondi
-            setTimeout(() => {
-                window.location.href = 'master.html?session=' + sessionCode;
-            }, 3000);
+            // Setup mobile navigation
+            setupMobileNavigation();
+            
+            // Update story display
+            updateStoryDisplay();
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
         }
-        
-        function joinSession() {
-            const playerName = document.getElementById('playerName').value;
-            const sessionCode = document.getElementById('joinCode').value.toUpperCase();
+
+        function loadRecentSessions() {
+            const recentSessionsData = JSON.parse(localStorage.getItem('dnd_recent_sessions') || '[]');
+            recentSessions.innerHTML = '';
             
-            if(!playerName || !sessionCode) {
-                alert('Inserisci nome e codice!');
+            if (recentSessionsData.length === 0) {
+                recentSessions.innerHTML = `
+                    <div class="no-recent-sessions">
+                        <i class="fas fa-clock" style="font-size: 2.5rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                        <p style="font-size: 1.1rem; margin-bottom: 5px;">Nessuna sessione recente</p>
+                        <p style="font-size: 0.95rem;">
+                            Inizia una nuova sessione o carica un file esistente
+                        </p>
+                    </div>
+                `;
                 return;
             }
             
-            // Salva dati giocatore
-            localStorage.setItem('playerData', JSON.stringify({
-                name: playerName,
-                session: sessionCode,
-                joined: Date.now()
+            // Sort by date (most recent first)
+            recentSessionsData.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Show max 5 sessions
+            const sessionsToShow = recentSessionsData.slice(0, 5);
+            
+            sessionsToShow.forEach(session => {
+                const sessionBtn = document.createElement('button');
+                sessionBtn.className = 'recent-session-btn';
+                sessionBtn.innerHTML = `
+                    <i class="fas fa-history" style="color: var(--accent-light);"></i>
+                    <div class="recent-session-info">
+                        <div class="recent-session-name">${session.name}</div>
+                        <div class="recent-session-date">
+                            ${formatDate(session.date)}
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: var(--text-muted);"></i>
+                `;
+                
+                sessionBtn.addEventListener('click', () => {
+                    loadRecentSession(session.name);
+                });
+                
+                recentSessions.appendChild(sessionBtn);
+            });
+        }
+
+        function loadRecentSession(sessionName) {
+            const sessionData = localStorage.getItem(`dnd_session_${sessionName}`);
+            if (!sessionData) {
+                alert('❌ Sessione non trovata! Potrebbe essere stata cancellata.');
+                loadRecentSessions(); // Refresh list
+                return;
+            }
+            
+            try {
+                const loadedSession = JSON.parse(sessionData);
+                importSessionData(loadedSession, true);
+            } catch (error) {
+                console.error('Errore nel caricamento:', error);
+                alert('❌ Errore nel caricamento della sessione: ' + error.message);
+            }
+        }
+
+        function handleLoadSessionFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Show loading state
+            const originalText = selectFileBtn.innerHTML;
+            selectFileBtn.innerHTML = `
+                <i class="fas fa-spinner fa-spin"></i>
+                Caricamento in corso...
+            `;
+            selectFileBtn.disabled = true;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const sessionData = JSON.parse(e.target.result);
+                    
+                    if (!sessionData.name && !sessionData.sessionInfo?.name) {
+                        throw new Error('File di sessione non valido: nome mancante');
+                    }
+
+                    importSessionData(sessionData, true);
+                    
+                } catch (error) {
+                    console.error('Errore nel caricamento del file:', error);
+                    alert('❌ Errore nel caricamento del file: ' + error.message);
+                } finally {
+                    // Restore button
+                    selectFileBtn.innerHTML = originalText;
+                    selectFileBtn.disabled = false;
+                    loadSessionFile.value = '';
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('❌ Errore nella lettura del file');
+                selectFileBtn.innerHTML = originalText;
+                selectFileBtn.disabled = false;
+                loadSessionFile.value = '';
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function handleImportSessionFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const sessionData = JSON.parse(e.target.result);
+                    
+                    if (!sessionData.name && !sessionData.sessionInfo?.name) {
+                        throw new Error('File di sessione non valido: nome mancante');
+                    }
+
+                    const sessionName = sessionData.name || sessionData.sessionInfo?.name;
+                    if (confirm(`📥 Importare la sessione "${sessionName}"? I dati correnti verranno sovrascritti.`)) {
+                        importSessionData(sessionData, false);
+                    }
+                } catch (error) {
+                    console.error('Errore nell\'importazione:', error);
+                    alert('❌ Errore nell\'importazione: ' + error.message);
+                } finally {
+                    importFile.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function importSessionData(sessionData, fromFileLoad = false) {
+            console.log('📥 Importazione dati:', sessionData);
+            
+            currentSession = {
+                name: sessionData.name || sessionData.sessionInfo?.name || 'Sessione Importata',
+                players: sessionData.players || [],
+                enemies: sessionData.enemies || [],
+                log: sessionData.recentLog || sessionData.log || [],
+                notes: sessionData.notes || {},
+                story: sessionData.story || '# La storia della sessione\n\nInizia qui la tua avventura...',
+                stats: sessionData.stats || {
+                    totalDamage: sessionData.totalDamage || 0,
+                    totalActions: sessionData.totalActions || 0,
+                    enemiesDefeated: sessionData.enemiesDefeated || 0,
+                    potionsUsed: sessionData.potionsUsed || 0
+                },
+                selectedPlayer: null,
+                settings: sessionData.settings || { 
+                    autoSave: true,
+                    combatMode: false 
+                },
+                lastSave: new Date().toISOString()
+            };
+
+            // Ensure all players have required properties
+            currentSession.players.forEach(player => {
+                if (player.damageDealt === undefined) player.damageDealt = 0;
+                if (!player.notes && currentSession.notes[player.id]) {
+                    player.notes = currentSession.notes[player.id];
+                }
+            });
+
+            // Ensure all enemies have required properties
+            currentSession.enemies.forEach(enemy => {
+                if (enemy.damageDealt === undefined) enemy.damageDealt = 0;
+                if (!enemy.notes && currentSession.notes[enemy.id]) {
+                    enemy.notes = currentSession.notes[enemy.id];
+                }
+            });
+
+            // Update UI
+            currentSessionName.textContent = currentSession.name;
+            loginScreen.style.display = 'none';
+            mainApp.style.display = 'grid';
+
+            // Setup mobile UI
+            if (window.innerWidth < 768) {
+                mobileMenuToggle.style.display = 'flex';
+            }
+
+            // Start auto-save
+            startAutoSave();
+
+            // Add to recent if from file load
+            if (fromFileLoad) {
+                addToRecentSessions(currentSession.name);
+                addLogEntry(`📁 Sessione "${currentSession.name}" caricata da file`);
+            } else {
+                addLogEntry(`📥 Sessione "${currentSession.name}" importata da file`);
+            }
+
+            // Restore app state
+            renderPlayers();
+            renderEnemies();
+            renderLog();
+            updateStats();
+            updateChart();
+            updateTargetSelect();
+            updatePotionTarget();
+            updateNotesTarget();
+            updateNotesDisplay();
+            updateStoryDisplay();
+            updateEnemyCount();
+            
+            // Initialize chart if needed
+            if (!damageChart) {
+                initChart();
+            }
+            
+            // Setup mobile navigation
+            setupMobileNavigation();
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        function addToRecentSessions(sessionName) {
+            let recentSessionsData = JSON.parse(localStorage.getItem('dnd_recent_sessions') || '[]');
+            
+            // Remove if already exists
+            recentSessionsData = recentSessionsData.filter(s => s.name !== sessionName);
+            
+            // Add to top
+            recentSessionsData.unshift({
+                name: sessionName,
+                date: new Date().toISOString()
+            });
+            
+            // Keep only last 10
+            recentSessionsData = recentSessionsData.slice(0, 10);
+            
+            localStorage.setItem('dnd_recent_sessions', JSON.stringify(recentSessionsData));
+            loadRecentSessions();
+        }
+
+        function checkAutoLoadSession() {
+            const lastSession = localStorage.getItem('dnd_last_session');
+            if (lastSession) {
+                try {
+                    const sessionInfo = JSON.parse(lastSession);
+                    const sessionData = localStorage.getItem(`dnd_session_${sessionInfo.name}`);
+                    if (sessionData) {
+                        const lastSave = new Date(sessionInfo.timestamp);
+                        const now = new Date();
+                        const hoursDiff = (now - lastSave) / (1000 * 60 * 60);
+                        
+                        if (hoursDiff < 24) {
+                            setTimeout(() => {
+                                if (confirm(`🔄 Vuoi riprendere l'ultima sessione "${sessionInfo.name}"?`)) {
+                                    loadRecentSession(sessionInfo.name);
+                                }
+                            }, 500);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Errore nel caricamento automatico:', e);
+                }
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                return 'Oggi alle ' + date.toLocaleTimeString('it-IT', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            } else if (diffDays === 1) {
+                return 'Ieri alle ' + date.toLocaleTimeString('it-IT', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            } else if (diffDays < 7) {
+                return `${diffDays} giorni fa`;
+            } else {
+                return date.toLocaleDateString('it-IT', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+            }
+        }
+
+        // ===== GESTIONE PERSONAGGI =====
+        function addNewPlayer(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('newPlayerName').value.trim();
+            const health = parseInt(document.getElementById('newPlayerHealth').value) || 30;
+            const maxHealth = parseInt(document.getElementById('newPlayerMaxHealth').value) || 30;
+            const playerClass = document.getElementById('newPlayerClass').value.trim();
+            const abilities = [
+                document.getElementById('newPlayerAbility1').value.trim(),
+                document.getElementById('newPlayerAbility2').value.trim() || '',
+                document.getElementById('newPlayerAbility3').value.trim() || ''
+            ].filter(ability => ability !== '');
+            
+            const initialNotes = document.getElementById('newPlayerNotes').value.trim();
+
+            if (!name) {
+                alert('⚠️ Inserisci un nome per il personaggio');
+                return;
+            }
+
+            const player = {
+                id: Date.now(),
+                name,
+                photo: currentPhotoData || 'https://images.unsplash.com/photo-1547722700-57de53c5c0e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+                health: Math.max(1, health),
+                maxHealth: Math.max(1, maxHealth),
+                class: playerClass,
+                abilities: abilities.length > 0 ? abilities : ['Attacco Base', 'Difesa', 'Abilità Speciale'],
+                damageDealt: 0,
+                notes: initialNotes
+            };
+
+            currentSession.players.push(player);
+            
+            // Save notes
+            if (initialNotes) {
+                currentSession.notes[player.id] = initialNotes;
+            }
+            
+            renderPlayers();
+            updateChart();
+            updateTargetSelect();
+            updatePotionTarget();
+            updateNotesTarget();
+            updateNotesDisplay();
+            hideModal(addPlayerModal);
+            playerForm.reset();
+            currentPhotoData = null;
+            newPlayerPhotoInput.value = '';
+            
+            addLogEntry(`🎭 ${name} si unisce alla compagnia!${playerClass ? ` (${playerClass})` : ''}`, 'heal');
+        }
+
+        function renderPlayers() {
+            playersList.innerHTML = '';
+            
+            if (currentSession.players.length === 0) {
+                playersList.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; color: var(--text-muted);">
+                        <i class="fas fa-users" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                        <h3 style="margin-bottom: 10px; font-size: 1.4rem;">Nessun personaggio</h3>
+                        <p>Clicca su "Nuovo Personaggio" per aggiungere il primo!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            currentSession.players.forEach((player) => {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card';
+                
+                // Highlight selected player
+                if (currentSession.selectedPlayer && currentSession.selectedPlayer.id === player.id) {
+                    playerCard.classList.add('active');
+                }
+
+                const healthPercentage = (player.health / player.maxHealth) * 100;
+                const isLowHealth = healthPercentage < 25;
+
+                playerCard.innerHTML = `
+                    <div class="player-header">
+                        <div class="player-name" title="${player.name}">
+                            ${player.name}
+                            ${player.class ? `<small style="color: var(--text-muted); font-size: 0.8rem; display: block;">${player.class}</small>` : ''}
+                        </div>
+                        <div class="player-controls">
+                            <button class="health-btn danger" onclick="event.stopPropagation(); showQuickHealthModal(${player.id}, 'player')" title="Gestisci vita">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                            <button class="health-btn warning" onclick="event.stopPropagation(); editPlayer(${player.id})" title="Modifica">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="player-photo-container">
+                        ${player.photo.startsWith('data:image/') ? 
+                            `<img src="${player.photo}" alt="${player.name}" class="player-photo" onclick="event.stopPropagation(); viewPlayerPhoto('${player.id}')">` :
+                            `<img src="${player.photo}" alt="${player.name}" class="player-photo" onerror="this.src='https://images.unsplash.com/photo-1547722700-57de53c5c0e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'" onclick="event.stopPropagation(); viewPlayerPhoto('${player.id}')">`
+                        }
+                        <div class="photo-upload-btn" onclick="event.stopPropagation(); changePlayerPhoto(${player.id})" title="Cambia foto">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                    </div>
+                    <div class="health-section">
+                        <div class="health-input-group">
+                            <input type="number" value="${player.health}" 
+                                   onchange="changeHealth(${player.id}, this.value - ${player.health}, 'player')"
+                                   min="0" max="${player.maxHealth}"
+                                   title="Punti vita attuali">
+                            <span style="color: var(--text-muted); align-self: center;">/</span>
+                            <input type="number" value="${player.maxHealth}" 
+                                   onchange="changeMaxHealth(${player.id}, this.value, 'player')"
+                                   min="1"
+                                   title="Punti vita massimi">
+                        </div>
+                        <div class="health-bar">
+                            <div class="health-fill ${isLowHealth ? 'low' : ''}" style="width: ${healthPercentage}%">
+                                <div class="health-text">${player.health}/${player.maxHealth}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="player-abilities" style="margin-top: 15px;">
+                        ${player.abilities.map(ability => ability ? `<div class="ability">${ability}</div>` : '').join('')}
+                    </div>
+                `;
+
+                // Add click to select player
+                playerCard.addEventListener('click', () => {
+                    selectPlayer(player);
+                });
+
+                playersList.appendChild(playerCard);
+            });
+        }
+
+        function selectPlayer(player) {
+            currentSession.selectedPlayer = player;
+            currentActor.classList.add('active');
+            currentActorName.textContent = player.name;
+            actorInstructions.textContent = 'Seleziona un\'azione da eseguire';
+            renderPlayers();
+            
+            // Scroll to combat section on mobile
+            if (window.innerWidth < 768) {
+                scrollToSection('combatSection');
+            }
+            
+            addLogEntry(`🎯 ${player.name} è pronto per agire`);
+        }
+
+        function editPlayer(playerId) {
+            const player = currentSession.players.find(p => p.id === playerId);
+            if (!player) return;
+            
+            // Fill modal with player data
+            document.getElementById('newPlayerName').value = player.name;
+            document.getElementById('newPlayerHealth').value = player.health;
+            document.getElementById('newPlayerMaxHealth').value = player.maxHealth;
+            document.getElementById('newPlayerClass').value = player.class || '';
+            document.getElementById('newPlayerAbility1').value = player.abilities[0] || '';
+            document.getElementById('newPlayerAbility2').value = player.abilities[1] || '';
+            document.getElementById('newPlayerAbility3').value = player.abilities[2] || '';
+            document.getElementById('newPlayerNotes').value = player.notes || '';
+            
+            // Store the player ID for update
+            playerForm.dataset.editingId = playerId;
+            
+            showModal(addPlayerModal);
+        }
+
+        function updatePlayer() {
+            const playerId = parseInt(playerForm.dataset.editingId);
+            const playerIndex = currentSession.players.findIndex(p => p.id === playerId);
+            
+            if (playerIndex === -1) return;
+            
+            const player = currentSession.players[playerIndex];
+            
+            // Update player data
+            player.name = document.getElementById('newPlayerName').value.trim();
+            player.health = parseInt(document.getElementById('newPlayerHealth').value) || 30;
+            player.maxHealth = parseInt(document.getElementById('newPlayerMaxHealth').value) || 30;
+            player.class = document.getElementById('newPlayerClass').value.trim();
+            player.abilities = [
+                document.getElementById('newPlayerAbility1').value.trim(),
+                document.getElementById('newPlayerAbility2').value.trim(),
+                document.getElementById('newPlayerAbility3').value.trim()
+            ];
+            player.notes = document.getElementById('newPlayerNotes').value.trim();
+            
+            // Update photo if changed
+            if (currentPhotoData) {
+                player.photo = currentPhotoData;
+            }
+            
+            // Update notes object
+            if (player.notes) {
+                currentSession.notes[playerId] = player.notes;
+            } else {
+                delete currentSession.notes[playerId];
+            }
+            
+            renderPlayers();
+            updateChart();
+            updateTargetSelect();
+            updatePotionTarget();
+            updateNotesTarget();
+            updateNotesDisplay();
+            hideModal(addPlayerModal);
+            playerForm.reset();
+            delete playerForm.dataset.editingId;
+            currentPhotoData = null;
+            
+            addLogEntry(`✏️ ${player.name} è stato aggiornato`);
+        }
+
+        // ===== GESTIONE NEMICI =====
+        function addNewEnemy(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('newEnemyName').value.trim();
+            const health = parseInt(document.getElementById('newEnemyHealth').value) || 20;
+            const maxHealth = parseInt(document.getElementById('newEnemyMaxHealth').value) || 20;
+            const damage = parseInt(document.getElementById('newEnemyDamage').value) || 5;
+            const armor = parseInt(document.getElementById('newEnemyArmor').value) || 0;
+            const enemyNotes = document.getElementById('newEnemyNotes').value.trim();
+
+            if (!name) {
+                alert('⚠️ Inserisci un nome per il nemico');
+                return;
+            }
+
+            const enemy = {
+                id: Date.now(),
+                name,
+                health: Math.max(1, health),
+                maxHealth: Math.max(1, maxHealth),
+                damage: Math.max(0, damage),
+                armor: Math.max(0, armor),
+                damageDealt: 0,
+                notes: enemyNotes
+            };
+
+            currentSession.enemies.push(enemy);
+            
+            renderEnemies();
+            updateTargetSelect();
+            updatePotionTarget();
+            updateNotesTarget();
+            hideModal(addEnemyModal);
+            enemyForm.reset();
+            
+            addLogEntry(`👹 ${name} appare sulla scena!`, 'damage');
+        }
+
+        function renderEnemies() {
+            enemiesList.innerHTML = '';
+            
+            if (currentSession.enemies.length === 0) {
+                enemiesList.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; color: var(--text-muted);">
+                        <i class="fas fa-skull-crossbones" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                        <h3 style="margin-bottom: 10px; font-size: 1.4rem;">Nessun nemico in vista</h3>
+                        <p>La strada è libera... per ora!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            currentSession.enemies.forEach(enemy => {
+                const enemyCard = document.createElement('div');
+                enemyCard.className = 'enemy-card';
+
+                const healthPercentage = (enemy.health / enemy.maxHealth) * 100;
+                const isLowHealth = healthPercentage < 25;
+
+                enemyCard.innerHTML = `
+                    <div class="player-header">
+                        <div class="player-name" title="${enemy.name}">${enemy.name}</div>
+                        <div class="player-controls">
+                            <button class="health-btn danger" onclick="event.stopPropagation(); showQuickHealthModal(${enemy.id}, 'enemy')" title="Gestisci vita">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                            <button class="health-btn warning" onclick="event.stopPropagation(); removeEnemy(${enemy.id})" title="Rimuovi">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="health-section">
+                        <div class="health-input-group">
+                            <input type="number" value="${enemy.health}" 
+                                   onchange="changeHealth(${enemy.id}, this.value - ${enemy.health}, 'enemy')"
+                                   min="0" max="${enemy.maxHealth}"
+                                   title="Punti vita attuali">
+                            <span style="color: var(--text-muted); align-self: center;">/</span>
+                            <input type="number" value="${enemy.maxHealth}" 
+                                   onchange="changeMaxHealth(${enemy.id}, this.value, 'enemy')"
+                                   min="1"
+                                   title="Punti vita massimi">
+                        </div>
+                        <div class="health-bar">
+                            <div class="health-fill ${isLowHealth ? 'low' : ''}" style="width: ${healthPercentage}%">
+                                <div class="health-text">${enemy.health}/${enemy.maxHealth}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.95rem; color: var(--text-muted); margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-bomb"></i> Danno: ${enemy.damage}</span>
+                        ${enemy.armor > 0 ? `<span><i class="fas fa-shield-alt"></i> CA: ${enemy.armor}</span>` : ''}
+                        ${enemy.notes ? '<span><i class="fas fa-sticky-note" title="Ha note"></i></span>' : ''}
+                    </div>
+                `;
+
+                enemiesList.appendChild(enemyCard);
+            });
+            
+            updateEnemyCount();
+            checkVictory();
+        }
+
+        function removeEnemy(enemyId) {
+            if (!confirm('🗑️ Rimuovere questo nemico?')) return;
+            
+            const enemyIndex = currentSession.enemies.findIndex(e => e.id === enemyId);
+            if (enemyIndex === -1) return;
+            
+            const enemy = currentSession.enemies[enemyIndex];
+            currentSession.enemies.splice(enemyIndex, 1);
+            
+            renderEnemies();
+            updateTargetSelect();
+            updatePotionTarget();
+            updateNotesTarget();
+            
+            addLogEntry(`🧹 ${enemy.name} è stato rimosso dal combattimento`);
+        }
+
+        // ===== GESTIONE VITA =====
+        function showQuickHealthModal(targetId, targetType) {
+            // Fill target select
+            const quickHealthTarget = document.getElementById('quickHealthTarget');
+            quickHealthTarget.innerHTML = '<option value="">Seleziona un bersaglio...</option>';
+            
+            if (targetType === 'player') {
+                const player = currentSession.players.find(p => p.id === targetId);
+                if (player) {
+                    const option = document.createElement('option');
+                    option.value = `${targetType}_${targetId}`;
+                    option.textContent = `${player.name} (Giocatore)`;
+                    option.selected = true;
+                    quickHealthTarget.appendChild(option);
+                }
+            } else {
+                const enemy = currentSession.enemies.find(e => e.id === targetId);
+                if (enemy) {
+                    const option = document.createElement('option');
+                    option.value = `${targetType}_${targetId}`;
+                    option.textContent = `${enemy.name} (Nemico)`;
+                    option.selected = true;
+                    quickHealthTarget.appendChild(option);
+                }
+            }
+            
+            // Add all other targets
+            currentSession.players.forEach(player => {
+                if (player.id !== targetId) {
+                    const option = document.createElement('option');
+                    option.value = `player_${player.id}`;
+                    option.textContent = `${player.name} (Giocatore)`;
+                    quickHealthTarget.appendChild(option);
+                }
+            });
+            
+            currentSession.enemies.forEach(enemy => {
+                if (enemy.id !== targetId) {
+                    const option = document.createElement('option');
+                    option.value = `enemy_${enemy.id}`;
+                    option.textContent = `${enemy.name} (Nemico)`;
+                    quickHealthTarget.appendChild(option);
+                }
+            });
+            
+            showModal(quickHealthModal);
+        }
+
+        function changeHealth(id, amount, type) {
+            let target, targetName;
+            
+            if (type === 'player') {
+                const index = currentSession.players.findIndex(p => p.id === id);
+                if (index === -1) return;
+                target = currentSession.players[index];
+                targetName = target.name;
+            } else {
+                const index = currentSession.enemies.findIndex(e => e.id === id);
+                if (index === -1) return;
+                target = currentSession.enemies[index];
+                targetName = target.name;
+            }
+
+            const newHealth = Math.max(0, Math.min(target.maxHealth, target.health + amount));
+            const actualChange = newHealth - target.health;
+            target.health = newHealth;
+
+            // Update log
+            if (actualChange !== 0) {
+                if (actualChange > 0) {
+                    addLogEntry(`💚 ${targetName} recupera ${actualChange} punti vita`, 'heal');
+                } else {
+                    const damageDealt = Math.abs(actualChange);
+                    addLogEntry(`💀 ${targetName} perde ${damageDealt} punti vita`, 'damage');
+                    
+                    // Update player damage dealt
+                    if (type === 'player' && currentSession.selectedPlayer && currentSession.selectedPlayer.id === id && amount < 0) {
+                        currentSession.selectedPlayer.damageDealt += damageDealt;
+                    }
+                    
+                    // Update stats
+                    if (amount < 0) {
+                        currentSession.stats.totalDamage += damageDealt;
+                        updateStats();
+                    }
+                    
+                    // If enemy dies
+                    if (type === 'enemy' && newHealth === 0) {
+                        setTimeout(() => {
+                            addLogEntry(`🎉 ${targetName} è stato sconfitto!`, 'victory');
+                            currentSession.stats.enemiesDefeated++;
+                            updateStats();
+                            updateEnemyCount();
+                            
+                            // Remove enemy
+                            const enemyIndex = currentSession.enemies.findIndex(e => e.id === id);
+                            if (enemyIndex !== -1) {
+                                currentSession.enemies.splice(enemyIndex, 1);
+                            }
+                            
+                            renderEnemies();
+                            updateTargetSelect();
+                            updatePotionTarget();
+                            updateNotesTarget();
+                            updateChart();
+                            
+                            checkVictory();
+                        }, 500);
+                    }
+                    
+                    // If player dies
+                    if (type === 'player' && newHealth === 0) {
+                        addLogEntry(`💀 ${targetName} è stato sconfitto!`, 'damage');
+                        
+                        // Deselect if selected player dies
+                        if (currentSession.selectedPlayer && currentSession.selectedPlayer.id === id) {
+                            currentSession.selectedPlayer = null;
+                            currentActor.classList.remove('active');
+                            renderPlayers();
+                        }
+                    }
+                }
+            }
+
+            // Re-render
+            if (type === 'player') {
+                renderPlayers();
+            } else {
+                renderEnemies();
+            }
+
+            updateStats();
+            updateChart();
+        }
+
+        function changeMaxHealth(id, newMaxHealth, type) {
+            newMaxHealth = parseInt(newMaxHealth) || 1;
+            
+            if (type === 'player') {
+                const index = currentSession.players.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    const player = currentSession.players[index];
+                    player.maxHealth = newMaxHealth;
+                    if (player.health > newMaxHealth) {
+                        player.health = newMaxHealth;
+                    }
+                    renderPlayers();
+                }
+            } else {
+                const index = currentSession.enemies.findIndex(e => e.id === id);
+                if (index !== -1) {
+                    const enemy = currentSession.enemies[index];
+                    enemy.maxHealth = newMaxHealth;
+                    if (enemy.health > newMaxHealth) {
+                        enemy.health = newMaxHealth;
+                    }
+                    renderEnemies();
+                }
+            }
+        }
+
+        // ===== GESTIONE FOTO =====
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                alert('⚠️ Per favore seleziona un file immagine');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                alert('⚠️ L\'immagine è troppo grande. Massimo 5MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentPhotoData = e.target.result;
+                photoPreview.src = currentPhotoData;
+                showModal(photoPreviewModal);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function confirmPhotoSelection() {
+            hideModal(photoPreviewModal);
+        }
+
+        function viewPlayerPhoto(playerId) {
+            const player = currentSession.players.find(p => p.id === playerId);
+            if (player && player.photo) {
+                photoPreview.src = player.photo;
+                confirmPhotoBtn.style.display = 'none';
+                cancelPhotoBtn.textContent = 'Chiudi';
+                showModal(photoPreviewModal);
+            }
+        }
+
+        function changePlayerPhoto(playerId) {
+            currentPhotoTarget = { id: playerId, type: 'player' };
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => {
+                handlePhotoUpload(e);
+            };
+            input.click();
+        }
+
+        // ===== GESTIONE AZIONI =====
+        function switchActionTab(tabName) {
+            // Update active tabs
+            actionTabs.forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.tab === tabName);
+            });
+
+            // Show/hide forms
+            actionForms.forEach(form => {
+                if (form.id === `${tabName}Form`) {
+                    form.style.display = 'flex';
+                } else {
+                    form.style.display = 'none';
+                }
+            });
+
+            // Update target selectors
+            updateTargetSelect();
+            updatePotionTarget();
+            updateNotesTarget();
+            
+            // Auto-focus on mobile
+            if (window.innerWidth < 768) {
+                setTimeout(() => {
+                    const firstInput = document.querySelector(`#${tabName}Form input, #${tabName}Form select, #${tabName}Form textarea`);
+                    if (firstInput) firstInput.focus();
+                }, 300);
+            }
+        }
+
+        function updateTargetSelect() {
+            targetSelect.innerHTML = '<option value="">Seleziona un bersaglio...</option>';
+            
+            // Add enemies as targets
+            currentSession.enemies.forEach(enemy => {
+                if (enemy.health > 0) {
+                    const option = document.createElement('option');
+                    option.value = `enemy_${enemy.id}`;
+                    option.textContent = `${enemy.name} (Nemico - ${enemy.health}/${enemy.maxHealth} HP)`;
+                    targetSelect.appendChild(option);
+                }
+            });
+            
+            // Add players as targets (for friendly fire)
+            currentSession.players.forEach(player => {
+                if (player.health > 0) {
+                    const option = document.createElement('option');
+                    option.value = `player_${player.id}`;
+                    option.textContent = `${player.name} (Giocatore - ${player.health}/${player.maxHealth} HP)`;
+                    targetSelect.appendChild(option);
+                }
+            });
+        }
+
+        function updatePotionTarget() {
+            potionTarget.innerHTML = '<option value="">Seleziona un bersaglio...</option>';
+            
+            // Add players
+            currentSession.players.forEach(player => {
+                const option = document.createElement('option');
+                option.value = `player_${player.id}`;
+                option.textContent = `${player.name} (Giocatore - ${player.health}/${player.maxHealth} HP)`;
+                potionTarget.appendChild(option);
+            });
+            
+            // Add enemies
+            currentSession.enemies.forEach(enemy => {
+                if (enemy.health > 0) {
+                    const option = document.createElement('option');
+                    option.value = `enemy_${enemy.id}`;
+                    option.textContent = `${enemy.name} (Nemico - ${enemy.health}/${enemy.maxHealth} HP)`;
+                    potionTarget.appendChild(option);
+                }
+            });
+        }
+
+        function updateNotesTarget() {
+            notesTarget.innerHTML = '<option value="">Seleziona un personaggio...</option>';
+            
+            // Add players
+            currentSession.players.forEach(player => {
+                const option = document.createElement('option');
+                option.value = `player_${player.id}`;
+                option.textContent = `${player.name} (Giocatore)`;
+                notesTarget.appendChild(option);
+            });
+            
+            // Add enemies
+            currentSession.enemies.forEach(enemy => {
+                const option = document.createElement('option');
+                option.value = `enemy_${enemy.id}`;
+                option.textContent = `${enemy.name} (Nemico)`;
+                notesTarget.appendChild(option);
+            });
+        }
+
+        function applyDamage() {
+            if (!currentSession.selectedPlayer) {
+                alert('⚠️ Seleziona prima un personaggio!');
+                return;
+            }
+
+            const amount = parseInt(damageAmount.value);
+            if (isNaN(amount) || amount < 0) {
+                alert('⚠️ Inserisci un valore valido per il danno');
+                return;
+            }
+
+            const targetValue = targetSelect.value;
+            if (!targetValue) {
+                alert('⚠️ Seleziona un bersaglio');
+                return;
+            }
+
+            const [type, id] = targetValue.split('_');
+            const targetId = parseInt(id);
+
+            if (amount > 0) {
+                changeHealth(targetId, -amount, type);
+                
+                // Update player damage dealt
+                currentSession.selectedPlayer.damageDealt += amount;
+                currentSession.stats.totalDamage += amount;
+                currentSession.stats.totalActions++;
+                
+                // Update stats and chart
+                updateStats();
+                updateChart();
+                
+                // Reset form
+                damageAmount.value = '';
+            }
+        }
+
+        function applyPotion() {
+            if (!currentSession.selectedPlayer) {
+                alert('⚠️ Seleziona prima un personaggio!');
+                return;
+            }
+
+            const potionTypeValue = potionType.value;
+            const targetValue = potionTarget.value;
+            const effect = parseInt(potionEffect.value);
+
+            if (isNaN(effect) || effect <= 0) {
+                alert('⚠️ Inserisci un valore valido per l\'effetto');
+                return;
+            }
+
+            if (!targetValue) {
+                alert('⚠️ Seleziona un bersaglio');
+                return;
+            }
+
+            const [type, id] = targetValue.split('_');
+            const targetId = parseInt(id);
+
+            const potionTypes = {
+                'heal': '🧪 Pozione di Guarigione',
+                'poison': '☠️ Veleno',
+                'strength': '💪 Pozione di Forza',
+                'speed': '⚡ Pozione di Velocità',
+                'invisibility': '👻 Pozione di Invisibilità'
+            };
+
+            let targetName = '';
+            
+            if (type === 'player') {
+                const target = currentSession.players.find(p => p.id === targetId);
+                targetName = target?.name || 'Giocatore sconosciuto';
+            } else {
+                const target = currentSession.enemies.find(e => e.id === targetId);
+                targetName = target?.name || 'Nemico sconosciuto';
+            }
+
+            if (potionTypeValue === 'heal') {
+                changeHealth(targetId, effect, type);
+                addLogEntry(`${currentSession.selectedPlayer.name} usa ${potionTypes[potionTypeValue]} su ${targetName} (+${effect} HP)`, 'potion');
+            } else if (potionTypeValue === 'poison') {
+                changeHealth(targetId, -effect, type);
+                addLogEntry(`${currentSession.selectedPlayer.name} usa ${potionTypes[potionTypeValue]} su ${targetName} (-${effect} HP)`, 'poison');
+            } else {
+                addLogEntry(`${currentSession.selectedPlayer.name} usa ${potionTypes[potionTypeValue]} su ${targetName}`, 'potion');
+            }
+
+            currentSession.stats.potionsUsed++;
+            currentSession.stats.totalActions++;
+            updateStats();
+            
+            // Reset form
+            potionEffect.value = '';
+        }
+
+        // ===== GESTIONE APPUNTI =====
+        function savePlayerNotes() {
+            if (!currentSession.selectedPlayer) {
+                alert('⚠️ Seleziona prima un personaggio!');
+                return;
+            }
+
+            const targetValue = notesTarget.value;
+            const notes = notesText.value.trim();
+            
+            if (!targetValue) {
+                alert('⚠️ Seleziona un personaggio');
+                return;
+            }
+
+            if (!notes) {
+                alert('⚠️ Inserisci degli appunti');
+                return;
+            }
+
+            const [type, id] = targetValue.split('_');
+            const targetId = parseInt(id);
+
+            if (type === 'player') {
+                const player = currentSession.players.find(p => p.id === targetId);
+                if (player) {
+                    player.notes = notes;
+                    currentSession.notes[targetId] = notes;
+                    addLogEntry(`${currentSession.selectedPlayer.name} aggiunge appunti per ${player.name}`, 'notes');
+                }
+            } else {
+                const enemy = currentSession.enemies.find(e => e.id === targetId);
+                if (enemy) {
+                    enemy.notes = notes;
+                    currentSession.notes[targetId] = notes;
+                    addLogEntry(`${currentSession.selectedPlayer.name} aggiunge appunti per ${enemy.name}`, 'notes');
+                }
+            }
+
+            updateNotesDisplay();
+            notesText.value = '';
+        }
+
+        function updateNotesDisplay() {
+            notesContent.innerHTML = '';
+            
+            const allNotes = [];
+            
+            // Add player notes
+            currentSession.players.forEach(player => {
+                if (player.notes) {
+                    allNotes.push({
+                        name: player.name,
+                        notes: player.notes,
+                        type: 'player',
+                        class: player.class
+                    });
+                }
+            });
+            
+            // Add enemy notes
+            currentSession.enemies.forEach(enemy => {
+                if (enemy.notes) {
+                    allNotes.push({
+                        name: enemy.name,
+                        notes: enemy.notes,
+                        type: 'enemy'
+                    });
+                }
+            });
+            
+            if (allNotes.length === 0) {
+                notesContent.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                        <i class="fas fa-sticky-note" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                        <h3 style="margin-bottom: 10px; font-size: 1.3rem;">Nessun appunto salvato</h3>
+                        <p>Usa la tab "Appunti" per aggiungere note sui personaggi</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            allNotes.forEach(note => {
+                const noteElement = document.createElement('div');
+                noteElement.className = 'log-entry notes';
+                noteElement.style.marginBottom = '15px';
+                noteElement.innerHTML = `
+                    <div style="font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; color: var(--highlight);">
+                        <i class="fas fa-${note.type === 'player' ? 'user' : 'skull'}"></i>
+                        ${note.name}
+                        ${note.class ? `<span style="font-size: 0.9rem; color: var(--text-muted); font-weight: normal;">(${note.class})</span>` : ''}
+                    </div>
+                    <div style="font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap;">${note.notes}</div>
+                `;
+                notesContent.appendChild(noteElement);
+            });
+        }
+
+        function clearAllNotes() {
+            if (!confirm('🗑️ Cancellare tutti gli appunti? Questa azione non può essere annullata.')) return;
+            
+            currentSession.players.forEach(player => {
+                player.notes = '';
+            });
+            currentSession.enemies.forEach(enemy => {
+                enemy.notes = '';
+            });
+            currentSession.notes = {};
+            updateNotesDisplay();
+            addLogEntry('🧹 Tutti gli appunti cancellati');
+        }
+
+        // ===== GESTIONE STORIA =====
+        function addStoryEntry() {
+            if (!currentSession.selectedPlayer) {
+                alert('⚠️ Seleziona prima un personaggio!');
+                return;
+            }
+
+            const entry = storyEntry.value.trim();
+            
+            if (!entry) {
+                alert('⚠️ Scrivi qualcosa per la storia!');
+                return;
+            }
+
+            const timestamp = new Date().toLocaleTimeString('it-IT', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            const storyEntryWithTimestamp = `**[${timestamp}] ${currentSession.selectedPlayer.name}:** ${entry}\n\n`;
+            
+            currentSession.story += storyEntryWithTimestamp;
+            updateStoryDisplay();
+            storyEntry.value = '';
+            
+            addLogEntry(`${currentSession.selectedPlayer.name} aggiunge una voce alla storia`, 'story');
+        }
+
+        function toggleStoryEditor() {
+            storyEditor.classList.toggle('active');
+            storyContent.style.display = storyEditor.classList.contains('active') ? 'none' : 'block';
+            
+            if (storyEditor.classList.contains('active')) {
+                storyTextarea.value = currentSession.story;
+                storyTextarea.focus();
+            }
+        }
+
+        function saveStory() {
+            currentSession.story = storyTextarea.value.trim();
+            updateStoryDisplay();
+            storyEditor.classList.remove('active');
+            storyContent.style.display = 'block';
+            
+            addLogEntry('📖 Storia della sessione aggiornata', 'story');
+        }
+
+        function cancelStoryEdit() {
+            storyEditor.classList.remove('active');
+            storyContent.style.display = 'block';
+        }
+
+        function clearStory() {
+            if (!confirm('🗑️ Cancellare tutta la storia? Questa azione non può essere annullata.')) return;
+            
+            currentSession.story = '# La storia della sessione\n\nInizia qui la tua avventura...';
+            updateStoryDisplay();
+            
+            addLogEntry('🧹 Storia della sessione cancellata', 'story');
+        }
+
+        function updateStoryDisplay() {
+            storyContent.innerHTML = '';
+            
+            if (!currentSession.story || currentSession.story.trim() === '') {
+                currentSession.story = '# La storia della sessione\n\nInizia qui la tua avventura...';
+            }
+            
+            // Simple markdown parsing
+            let html = currentSession.story
+                .replace(/^# (.*$)/gm, '<h1 style="color: var(--highlight); margin: 20px 0 10px 0;">$1</h1>')
+                .replace(/^## (.*$)/gm, '<h2 style="color: var(--accent-light); margin: 15px 0 8px 0;">$1</h2>')
+                .replace(/^### (.*$)/gm, '<h3 style="color: var(--text-light); margin: 10px 0 5px 0;">$1</h3>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" style="color: var(--accent-light);">$1</a>')
+                .replace(/\n\n/g, '</p><p style="margin: 10px 0;">')
+                .replace(/\n/g, '<br>');
+            
+            storyContent.innerHTML = `<p style="margin: 10px 0; line-height: 1.6;">${html}</p>`;
+        }
+
+        // ===== GESTIONE LOG =====
+        function addLogEntry(message, type = 'normal') {
+            const now = new Date();
+            const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            const logEntry = {
+                timestamp,
+                message,
+                type
+            };
+            
+            currentSession.log.unshift(logEntry);
+            
+            // Keep only last 100 entries
+            if (currentSession.log.length > 100) {
+                currentSession.log = currentSession.log.slice(0, 100);
+            }
+            
+            renderLog();
+        }
+
+        function renderLog() {
+            logEntries.innerHTML = '';
+            
+            if (currentSession.log.length === 0) {
+                logEntries.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                        <i class="fas fa-scroll" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                        <h3 style="margin-bottom: 10px; font-size: 1.3rem;">Il log degli eventi è vuoto</h3>
+                        <p>Le azioni appariranno qui mentre giochi</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            currentSession.log.slice(0, 20).forEach(entry => {
+                const logElement = document.createElement('div');
+                logElement.className = `log-entry ${entry.type}`;
+                logElement.innerHTML = `
+                    <div class="timestamp">
+                        <i class="fas fa-clock"></i> ${entry.timestamp}
+                    </div>
+                    <div>${entry.message}</div>
+                `;
+                logEntries.appendChild(logElement);
+            });
+        }
+
+        function clearLog() {
+            if (!confirm('🗑️ Cancellare tutto il log? Questa azione non può essere annullata.')) return;
+            
+            currentSession.log = [];
+            renderLog();
+            
+            addLogEntry('🧹 Log degli eventi cancellato');
+        }
+
+        // ===== GESTIONE NEMICI E COMBATTIMENTO =====
+        function enemyAttackAll() {
+            if (currentSession.enemies.length === 0) {
+                alert('⚠️ Non ci sono nemici!');
+                return;
+            }
+
+            if (currentSession.players.length === 0) {
+                alert('⚠️ Non ci sono giocatori!');
+                return;
+            }
+
+            addLogEntry('👹 Tutti i nemici attaccano!', 'damage');
+            
+            // Each enemy attacks a random player
+            currentSession.enemies.forEach((enemy, index) => {
+                if (enemy.health > 0) {
+                    setTimeout(() => {
+                        const alivePlayers = currentSession.players.filter(p => p.health > 0);
+                        if (alivePlayers.length === 0) return;
+                        
+                        const randomPlayer = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+                        const damage = enemy.damage || 5;
+                        
+                        changeHealth(randomPlayer.id, -damage, 'player');
+                        enemy.damageDealt += damage;
+                        addLogEntry(`👹 ${enemy.name} infligge ${damage} danni a ${randomPlayer.name}`, 'damage');
+                    }, index * 300);
+                }
+            });
+        }
+
+        function healAllPlayers() {
+            if (currentSession.players.length === 0) {
+                alert('⚠️ Non ci sono giocatori!');
+                return;
+            }
+
+            const healAmount = prompt('💚 Quanti punti vita vuoi curare a tutti i giocatori?', "10");
+            if (healAmount === null) return;
+            
+            const amount = parseInt(healAmount);
+            if (isNaN(amount) || amount <= 0) {
+                alert('⚠️ Inserisci un numero valido');
+                return;
+            }
+
+            let healedPlayers = 0;
+            
+            currentSession.players.forEach(player => {
+                if (player.health < player.maxHealth) {
+                    const neededHeal = player.maxHealth - player.health;
+                    const actualHeal = Math.min(amount, neededHeal);
+                    player.health += actualHeal;
+                    healedPlayers++;
+                }
+            });
+            
+            if (healedPlayers > 0) {
+                renderPlayers();
+                addLogEntry(`💚 Tutti i giocatori curati di ${amount} punti vita`, 'heal');
+            } else {
+                addLogEntry('💚 Tutti i giocatori sono già al massimo della vita');
+            }
+        }
+
+        function resetCombat() {
+            if (confirm('🔄 Resettare il combattimento? I nemici torneranno a piena vita ma le statistiche rimarranno.')) {
+                // Reset enemies
+                currentSession.enemies.forEach(enemy => {
+                    enemy.health = enemy.maxHealth;
+                });
+                
+                // Reset players
+                currentSession.players.forEach(player => {
+                    player.health = player.maxHealth;
+                });
+                
+                renderEnemies();
+                renderPlayers();
+                updateTargetSelect();
+                updatePotionTarget();
+                updateNotesTarget();
+                
+                addLogEntry('🔄 Combattimento resettato');
+            }
+        }
+
+        function applyOtherAction() {
+            if (!currentSession.selectedPlayer) {
+                alert('⚠️ Seleziona prima un personaggio!');
+                return;
+            }
+
+            const actionText = otherAction.value.trim();
+            
+            if (!actionText) {
+                alert('⚠️ Descrivi l\'azione');
+                return;
+            }
+
+            addLogEntry(`${currentSession.selectedPlayer.name}: ${actionText}`);
+
+            otherAction.value = '';
+
+            currentSession.stats.totalActions++;
+            updateStats();
+        }
+
+        function toggleCombatMode() {
+            isCombatMode = !isCombatMode;
+            currentSession.settings.combatMode = isCombatMode;
+            
+            if (isCombatMode) {
+                combatStatus.innerHTML = '<i class="fas fa-fist-raised"></i> In Combattimento';
+                combatStatus.style.background = 'linear-gradient(135deg, var(--danger) 0%, #c62828 100%)';
+                toggleCombatBtn.innerHTML = '<i class="fas fa-peace"></i> Esplorazione';
+                addLogEntry('⚔️ Inizia il combattimento!', 'damage');
+            } else {
+                combatStatus.innerHTML = '<i class="fas fa-peace"></i> In Esplorazione';
+                combatStatus.style.background = 'linear-gradient(135deg, var(--success) 0%, #45a049 100%)';
+                toggleCombatBtn.innerHTML = '<i class="fas fa-fist-raised"></i> Combattimento';
+                addLogEntry('🌿 Fine del combattimento', 'heal');
+            }
+        }
+
+        function updateEnemyCount() {
+            const aliveEnemies = currentSession.enemies.filter(e => e.health > 0).length;
+            enemyCount.innerHTML = `<i class="fas fa-skull"></i> Nemici: ${aliveEnemies}`;
+        }
+
+        // ===== GESTIONE VITTORIA =====
+        function checkVictory() {
+            const aliveEnemies = currentSession.enemies.filter(e => e.health > 0);
+            if (aliveEnemies.length === 0 && currentSession.enemies.length > 0) {
+                setTimeout(() => {
+                    showVictoryScreen();
+                }, 1000);
+            }
+        }
+
+        function triggerVictory() {
+            if (currentSession.enemies.length === 0) {
+                alert('⚠️ Non ci sono nemici da sconfiggere!');
+                return;
+            }
+            
+            if (confirm('🎉 Forzare la vittoria? Tutti i nemici verranno sconfitti.')) {
+                currentSession.enemies = [];
+                renderEnemies();
+                updateTargetSelect();
+                updatePotionTarget();
+                updateNotesTarget();
+                showVictoryScreen();
+            }
+        }
+
+        function showVictoryScreen() {
+            // Calculate hero of the session
+            let hero = null;
+            let maxDamage = 0;
+            
+            currentSession.players.forEach(player => {
+                if (player.damageDealt > maxDamage) {
+                    maxDamage = player.damageDealt;
+                    hero = player;
+                }
+            });
+            
+            // Update victory stats
+            victoryDamage.textContent = currentSession.stats.totalDamage;
+            victoryActions.textContent = currentSession.stats.totalActions;
+            victoryEnemies.textContent = currentSession.stats.enemiesDefeated;
+            victoryPotions.textContent = currentSession.stats.potionsUsed;
+            victoryHero.textContent = hero ? `${hero.name}${hero.class ? ` (${hero.class})` : ''}` : 'Nessun dato';
+            
+            victoryScreen.style.display = 'flex';
+            createConfetti();
+        }
+
+        function closeVictoryScreen() {
+            victoryScreen.style.display = 'none';
+            isCombatMode = false;
+            currentSession.settings.combatMode = false;
+            combatStatus.innerHTML = '<i class="fas fa-peace"></i> In Esplorazione';
+            combatStatus.style.background = 'linear-gradient(135deg, var(--success) 0%, #45a049 100%)';
+            toggleCombatBtn.innerHTML = '<i class="fas fa-fist-raised"></i> Combattimento';
+        }
+
+        // ===== STATISTICHE E GRAFICO =====
+        function updateStats() {
+            totalDamageElement.textContent = currentSession.stats.totalDamage;
+            totalActionsElement.textContent = currentSession.stats.totalActions;
+            enemiesDefeatedElement.textContent = currentSession.stats.enemiesDefeated;
+            potionsUsedElement.textContent = currentSession.stats.potionsUsed;
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('damageChart').getContext('2d');
+            
+            damageChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Danno Inflitto',
+                        data: [],
+                        backgroundColor: 'rgba(42, 157, 143, 0.8)',
+                        borderColor: 'rgba(42, 157, 143, 1)',
+                        borderWidth: 2,
+                        borderRadius: 5,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { 
+                                color: '#f0f0f0',
+                                font: { size: 12 }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Danno per Personaggio',
+                            color: '#f0f0f0',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#f0f0f0',
+                            bodyColor: '#f0f0f0',
+                            borderColor: 'var(--accent-light)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { 
+                                color: '#b0b0b0',
+                                font: { size: 11 }
+                            },
+                            grid: { 
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                drawBorder: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Danno',
+                                color: '#b0b0b0'
+                            }
+                        },
+                        x: {
+                            ticks: { 
+                                color: '#b0b0b0',
+                                font: { size: 11 },
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: { 
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                drawBorder: false
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            const players = currentSession.players;
+            const labels = players.map(p => p.name);
+            const data = players.map(p => p.damageDealt || 0);
+            
+            damageChart.data.labels = labels;
+            damageChart.data.datasets[0].data = data;
+            damageChart.update();
+        }
+
+        // ===== GESTIONE FILE E SALVATAGGI =====
+        function startAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+            }
+            
+            autoSaveInterval = setInterval(() => {
+                saveSession();
+                showSaveNotification();
+            }, 30000); // 30 seconds
+        }
+
+        function saveSession() {
+            if (!currentSession.name) return;
+            
+            currentSession.lastSave = new Date().toISOString();
+            localStorage.setItem(`dnd_session_${currentSession.name}`, JSON.stringify(currentSession));
+            localStorage.setItem('dnd_last_session', JSON.stringify({ 
+                name: currentSession.name,
+                timestamp: currentSession.lastSave 
             }));
             
-            // Redirect alla vista giocatore
-            window.location.href = 'player.html?session=' + sessionCode;
+            console.log('💾 Sessione salvata:', currentSession.name);
         }
-        
-        function copyLink() {
-            const copyText = document.getElementById('inviteUrl');
-            copyText.select();
-            copyText.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(copyText.value);
-            alert('Link copiato!');
+
+        function manualSave() {
+            saveSession();
+            showSaveNotification();
+            addLogEntry('💾 Sessione salvata manualmente');
         }
+
+        function showSaveNotification() {
+            saveNotification.style.display = 'flex';
+            setTimeout(() => {
+                saveNotification.style.display = 'none';
+            }, 2000);
+        }
+
+        function createBackup() {
+            lastBackup = JSON.parse(JSON.stringify(currentSession));
+            addLogEntry('💾 Backup della sessione creato');
+            alert('✅ Backup creato con successo!');
+        }
+
+        function restoreFromBackup() {
+            if (!lastBackup) {
+                alert('⚠️ Nessun backup disponibile!');
+                return;
+            }
+            
+            if (confirm('🔄 Ripristinare il backup? I dati correnti verranno persi.')) {
+                currentSession = JSON.parse(JSON.stringify(lastBackup));
+                
+                // Restore state
+                renderPlayers();
+                renderEnemies();
+                renderLog();
+                updateStats();
+                updateChart();
+                updateTargetSelect();
+                updatePotionTarget();
+                updateNotesTarget();
+                updateNotesDisplay();
+                updateStoryDisplay();
+                updateEnemyCount();
+                
+                addLogEntry('🔄 Sessione ripristinata dal backup');
+            }
+        }
+
+        function exportSession() {
+            // Create complete report
+            const report = {
+                sessionInfo: {
+                    name: currentSession.name,
+                    exportDate: new Date().toISOString(),
+                    lastSave: currentSession.lastSave,
+                    totalPlayTime: calculatePlayTime()
+                },
+                stats: currentSession.stats,
+                players: currentSession.players.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    photo: p.photo.startsWith('data:image/') ? '[BASE64_IMAGE]' : p.photo,
+                    health: p.health,
+                    maxHealth: p.maxHealth,
+                    class: p.class,
+                    abilities: p.abilities,
+                    damageDealt: p.damageDealt,
+                    notes: p.notes
+                })),
+                enemies: currentSession.enemies.map(e => ({
+                    id: e.id,
+                    name: e.name,
+                    health: e.health,
+                    maxHealth: e.maxHealth,
+                    damage: e.damage,
+                    armor: e.armor,
+                    damageDealt: e.damageDealt,
+                    notes: e.notes
+                })),
+                notes: currentSession.notes,
+                story: currentSession.story,
+                recentLog: currentSession.log,
+                settings: currentSession.settings
+            };
+
+            // Create JSON file
+            const dataStr = JSON.stringify(report, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `dnd-session-${currentSession.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            addLogEntry('📤 Sessione esportata');
+        }
+
+        function printSession() {
+            // Create print-friendly content
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Report Sessione: ${currentSession.name}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1 { color: #0f4c75; }
+                        h2 { color: #3282b8; margin-top: 30px; }
+                        .section { margin-bottom: 30px; }
+                        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
+                        .stat-item { background: #f5f5f5; padding: 15px; border-radius: 8px; text-align: center; }
+                        .stat-value { font-size: 24px; font-weight: bold; color: #0f4c75; }
+                        .stat-label { color: #666; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th { background: #0f4c75; color: white; padding: 10px; text-align: left; }
+                        td { padding: 10px; border-bottom: 1px solid #ddd; }
+                        .log-entry { margin: 10px 0; padding: 10px; border-left: 3px solid #0f4c75; background: #f9f9f9; }
+                        .timestamp { color: #666; font-size: 0.9em; }
+                        @media print {
+                            button { display: none; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>🎮 Report Sessione D&D</h1>
+                    <p><strong>Nome Sessione:</strong> ${currentSession.name}</p>
+                    <p><strong>Data Report:</strong> ${new Date().toLocaleDateString('it-IT')}</p>
+                    
+                    <div class="section">
+                        <h2>📊 Statistiche di Gioco</h2>
+                        <div class="stat-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">${currentSession.stats.totalDamage}</div>
+                                <div class="stat-label">Danno Totale</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${currentSession.stats.totalActions}</div>
+                                <div class="stat-label">Azioni Registrate</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${currentSession.stats.enemiesDefeated}</div>
+                                <div class="stat-label">Nemici Sconfitti</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${currentSession.stats.potionsUsed}</div>
+                                <div class="stat-label">Pozioni Usate</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <h2>🎭 Personaggi</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Classe</th>
+                                    <th>Vita</th>
+                                    <th>Danno Inflitto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${currentSession.players.map(p => `
+                                    <tr>
+                                        <td>${p.name}</td>
+                                        <td>${p.class || '-'}</td>
+                                        <td>${p.health}/${p.maxHealth}</td>
+                                        <td>${p.damageDealt || 0}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    ${currentSession.story && currentSession.story.trim() !== '# La storia della sessione\n\nInizia qui la tua avventura...' ? `
+                    <div class="section">
+                        <h2>📖 Storia della Sessione</h2>
+                        <div style="white-space: pre-wrap; background: #f5f5f5; padding: 20px; border-radius: 8px;">
+                            ${currentSession.story.replace(/^# .*$/gm, '<h3 style="color: #0f4c75;">$&</h3>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n\n/g, '<br><br>')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="section">
+                        <h2>📜 Cronaca degli Eventi</h2>
+                        ${currentSession.log.slice(0, 50).map(entry => `
+                            <div class="log-entry">
+                                <div class="timestamp">${entry.timestamp}</div>
+                                <div>${entry.message}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="no-print" style="margin-top: 40px; text-align: center;">
+                        <button onclick="window.print()" style="padding: 10px 20px; background: #0f4c75; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            🖨️ Stampa Report
+                        </button>
+                        <button onclick="window.close()" style="padding: 10px 20px; background: #666; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                            ❌ Chiudi
+                        </button>
+                    </div>
+                    
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        };
+                    </script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            
+            addLogEntry('🖨️ Report di sessione generato');
+        }
+
+        function calculatePlayTime() {
+            if (!currentSession.lastSave) return 'N/D';
+            
+            const startTime = new Date(currentSession.lastSave);
+            const now = new Date();
+            const diffMs = now - startTime;
+            
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            return `${hours}h ${minutes}m`;
+        }
+
+        function endSession() {
+            if (confirm('🏁 Terminare la sessione? Verrà creato un report finale e tornerai alla schermata di login.')) {
+                exportSession();
+                
+                // Final animation
+                createConfetti();
+                
+                // Save final session
+                saveSession();
+                
+                // Return to login after 3 seconds
+                setTimeout(() => {
+                    mainApp.style.display = 'none';
+                    loginScreen.style.display = 'flex';
+                    loginForm.reset();
+                    
+                    if (autoSaveInterval) {
+                        clearInterval(autoSaveInterval);
+                        autoSaveInterval = null;
+                    }
+                    
+                    // Reset selected session
+                    currentSession.selectedPlayer = null;
+                    mobileMenuToggle.style.display = 'none';
+                    
+                    // Reload recent sessions
+                    loadRecentSessions();
+                }, 3000);
+                
+                addLogEntry('🏁 Sessione terminata!');
+            }
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        function showModal(modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideModal(modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            if (modal.id === 'photoPreviewModal') {
+                confirmPhotoBtn.style.display = 'block';
+                cancelPhotoBtn.textContent = 'Annulla';
+            }
+        }
+
+        function createConfetti() {
+            const colors = ['#0f4c75', '#3282b8', '#bbe1fa', '#FFD700', '#FF6B6B', '#4CAF50', '#9C27B0'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.width = Math.random() * 15 + 10 + 'px';
+                confetti.style.height = confetti.style.width;
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                
+                confetti.style.animation = `confetti-fall ${Math.random() * 3 + 2}s linear forwards`;
+                confetti.style.animationDelay = Math.random() * 1 + 's';
+                
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => {
+                    if (confetti.parentNode) {
+                        confetti.parentNode.removeChild(confetti);
+                    }
+                }, 5000);
+            }
+        }
+
+        function handleResize() {
+            const isMobile = window.innerWidth < 768;
+            if (mobileMenuToggle) {
+                if (!isMobile) {
+                    closeAllSidebars();
+                    mobileMenuToggle.style.display = 'none';
+                } else {
+                    mobileMenuToggle.style.display = 'flex';
+                }
+            }
+        }
+
+        function handleVisibilityChange() {
+            if (document.visibilityState === 'hidden' && currentSession.name) {
+                saveSession();
+            }
+        }
+
+        function handleBeforeUnload(e) {
+            if (currentSession.name) {
+                saveSession();
+            }
+        }
+
+        // ===== INIZIALIZZAZIONE APP =====
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Make functions available globally for inline event handlers
+        window.changeHealth = changeHealth;
+        window.changeMaxHealth = changeMaxHealth;
+        window.viewPlayerPhoto = viewPlayerPhoto;
+        window.changePlayerPhoto = changePlayerPhoto;
+        window.showQuickHealthModal = showQuickHealthModal;
+        window.editPlayer = editPlayer;
+        window.removeEnemy = removeEnemy;
+
     </script>
 </body>
 </html>

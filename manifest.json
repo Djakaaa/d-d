@@ -1,0 +1,29 @@
+{
+  "name": "D&D Session Manager",
+  "short_name": "D&D Manager",
+  "description": "Gestione sessioni di gioco di Dungeons & Dragons",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#0f4c75",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐉</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/npm/emoji-dragon@1.0.0/dragon_192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/npm/emoji-dragon@1.0.0/dragon_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["entertainment", "productivity", "games"],
+  "lang": "it",
+  "orientation": "any"
+}
